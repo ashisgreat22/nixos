@@ -1,0 +1,11 @@
+keys:
+  - &user_ashie age1g76q4cec3qykmkzrd6f4fxxpafj5fsut4jk7pklweuff97scpuusnwdknu
+  - &host_ashie_nixos ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKqErzhr2RWGOdfZo1udpWANe0LeMvFpLbQKKa3/aKnf
+
+creation_rules:
+  - path_regex: secrets/secrets.yaml$
+    key_groups:
+    - age:
+      - *user_ashie
+    - ssh:
+      - *host_ashie_nixos
