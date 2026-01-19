@@ -50,6 +50,22 @@
         "type": "github"
       }
     },
+    "catppuccin-userstyles": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768598910,
+        "narHash": "sha256-GlhBDOcaNADurl6NrmNGFk4MTf5wpoilzj74JCb04rA=",
+        "owner": "catppuccin",
+        "repo": "userstyles",
+        "rev": "a705c3166765be722f0d33d34a411b4aa2663169",
+        "type": "github"
+      },
+      "original": {
+        "owner": "catppuccin",
+        "repo": "userstyles",
+        "type": "github"
+      }
+    },
     "cosmic-manager": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -410,6 +426,22 @@
         "type": "github"
       }
     },
+    "mkdocs-catppuccin": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767028711,
+        "narHash": "sha256-YVIZAtQT2B4Xs2sBaszvyyukm+1klCJdRpsc/BYV1gw=",
+        "owner": "ruslanlap",
+        "repo": "mkdocs-catppuccin",
+        "rev": "fd8ac6106b5b6d32922cd80cbc3d221622a17408",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ruslanlap",
+        "repo": "mkdocs-catppuccin",
+        "type": "github"
+      }
+    },
     "niri": {
       "inputs": {
         "nixpkgs": [
@@ -472,6 +504,27 @@
       "original": {
         "owner": "xddxdd",
         "repo": "nix-cachyos-kernel",
+        "type": "github"
+      }
+    },
+    "nixflix": {
+      "inputs": {
+        "mkdocs-catppuccin": "mkdocs-catppuccin",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1768817462,
+        "narHash": "sha256-F3aGIF05MLaTbzulCxLuhkTPHnia8zYL8GOPrAy5SY4=",
+        "owner": "kiriwalawren",
+        "repo": "nixflix",
+        "rev": "174a08001731d38cad88aa4b690ed047090ebfff",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kiriwalawren",
+        "repo": "nixflix",
         "type": "github"
       }
     },
@@ -713,6 +766,7 @@
     "root": {
       "inputs": {
         "catppuccin": "catppuccin",
+        "catppuccin-userstyles": "catppuccin-userstyles",
         "cosmic-manager": "cosmic-manager",
         "home-manager": "home-manager",
         "impermanence": "impermanence",
@@ -721,6 +775,7 @@
         "niri": "niri",
         "nix-bwrapper": "nix-bwrapper",
         "nix-cachyos-kernel": "nix-cachyos-kernel",
+        "nixflix": "nixflix",
         "nixpkgs": "nixpkgs_5",
         "nixvim": "nixvim",
         "noctalia": "noctalia",

@@ -63,7 +63,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nixflix = {
+      url = "github:kiriwalawren/nixflix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     catppuccin.url = "github:catppuccin/nix";
+
+    catppuccin-userstyles = {
+      url = "github:catppuccin/userstyles";
+      flake = false;
+    };
 
     nixvim = {
       url = "github:nix-community/nixvim?shallow=1";
@@ -86,6 +96,7 @@
       lanzaboote,
       niri,
       cosmic-manager,
+      nixflix,
       ...
     }@inputs:
     {
@@ -119,6 +130,7 @@
           ./configuration.nix
           ./modules # Import all system modules
           inputs.sops-nix.nixosModules.sops
+          inputs.nixflix.nixosModules.default
           home-manager.nixosModules.home-manager
           inputs.catppuccin.nixosModules.catppuccin
           inputs.nixvim.nixosModules.nixvim
