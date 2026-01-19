@@ -14,7 +14,7 @@
   config = lib.mkIf config.myModules.performance.enable {
     services.scx = {
       enable = true;
-      scheduler = "scx_rustland";
+      scheduler = "scx_lavd";
       package = pkgs.scx.full;
     };
 
@@ -45,6 +45,8 @@
       "net.ipv4.tcp_rmem" = lib.mkForce "4096 1048576 2097152";
       "net.ipv4.tcp_wmem" = lib.mkForce "4096 65536 16777216";
     };
+
+    powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
 
     # faster boot
     systemd.services.NetworkManager-wait-online.enable = lib.mkForce false;

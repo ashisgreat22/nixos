@@ -24,13 +24,10 @@
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
-  # Unlock the encrypted root early in initrd (stable: UUID of the LUKS container)
   boot.initrd.luks.devices.cryptroot = {
     device = "/dev/disk/by-uuid/362284b1-a1ab-4ad0-b87b-eba30eaa258d";
-    # allowDiscards = true; # uncomment if you use SSD discard/TRIM through LUKS
   };
 
-  # EFI System Partition
   fileSystems."/boot" = {
     device = "/dev/disk/by-uuid/042E-DA9E";
     fsType = "vfat";
@@ -45,6 +42,26 @@
     fsType = "btrfs";
     options = [
       "subvol=@games"
+      "compress-force=zstd"
+      "noatime"
+    ];
+  };
+
+  fileSystems."/data" = {
+    device = "/dev/mapper/cryptdata";
+    fsType = "btrfs";
+    options = [
+      "subvol=@media"
+      "compress-force=zstd"
+      "noatime"
+    ];
+  };
+
+  fileSystems."/games/steam" = {
+    device = "/dev/mapper/cryptdata";
+    fsType = "btrfs";
+    options = [
+      "subvol=@steam"
       "compress-force=zstd"
       "noatime"
     ];
@@ -75,11 +92,6 @@
     neededForBoot = true;
   };
 
-  # NOTE:
-  # We intentionally do NOT define fileSystems."/" here because your setup appears to
-  # use impermanence (root is typically tmpfs). If you *do* have a persistent root
-  # subvolume, define it in your main config instead.
-
   networking.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
@@ -87,6 +99,6 @@
 
   boot.swraid = {
     enable = true;
-    mdadmConf = "PROGRAM ${pkgs.coreutils}/bin/true"; # Silences mdmon warning
+    mdadmConf = "PROGRAM ${pkgs.coreutils}/bin/true";
   };
 }

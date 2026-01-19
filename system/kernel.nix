@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  lib,
   inputs,
   ...
 }:
@@ -11,7 +12,7 @@
   # Use CachyOS Kernel
   boot.kernelPackages =
     pkgs.linuxPackagesFor
-      inputs.nix-cachyos-kernel.packages.${pkgs.system}.linux-cachyos-latest;
+      inputs.nix-cachyos-kernel.packages.${pkgs.system}.linux-cachyos-bore-lto;
 
   # =============================================================================
   # DEFAULT BOOT: Linux Desktop Mode (GPU for Host)
@@ -30,6 +31,9 @@
     "tcp_bbr"
     "vendor-reset"
     "ntsync"
+    "wireguard"
+    "af_packet"
+    "bridge"
   ];
 
   # =============================================================================

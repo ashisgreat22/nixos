@@ -232,7 +232,8 @@ in
           Mod+Minus { set-column-width "-10%"; }
           Mod+Equal { set-column-width "+10%"; }
 
-          Mod+Shift+E { quit; }
+          Mod+Shift+E { spawn "bemoji" "-t"; }
+
           Print { spawn "sh" "-c" "grim -g \"$(slurp)\" - | wl-copy"; }
 
           // Browsers

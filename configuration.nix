@@ -7,11 +7,23 @@
 }:
 {
   # Noctalia shell
+  # Noctalia shell
   environment.systemPackages = with pkgs; [
     inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
+    ydotool
   ];
 
   environment.etc."glfw".source = "${pkgs.glfw}/lib";
+
+  boot.kernelModules = [
+    "uinput"
+  ];
+  users.groups.uinput = { };
+  users.users.ashie.extraGroups = [ "uinput" ];
+
+  services.udev.extraRules = ''
+    KERNEL=="uinput", GROUP="uinput", MODE="0660", OPTIONS+="static_node=uinput"
+  '';
 
   # FORCE Root Filesystem to satisfy assertions
   fileSystems."/" = lib.mkForce {
@@ -34,12 +46,14 @@
     ./system/packages.nix # Package list
     ./system/users.nix # User accounts
     ./system/greetd.nix # Display manager
+    ./modules/system/cosmic.nix # Cosmic Desktop
     ./system/kernel.nix # CachyOS kernel
     ./system/locate.nix # mlocate
     ./system/secrets.nix # SOPS secrets
     ./system/compatibility.nix # Compatibility layers (nix-ld)
     ./system/game-drive.nix
-    # ./system/vpn.nix       # Uncomment to enable WireGuard VPN
+    ./system/vpn-namespace.nix # Isolated VPN Namespace
+    ./modules/system/media.nix # Arr Stack
   ];
 
   nixpkgs.config.allowUnfreePredicate =
@@ -102,7 +116,6 @@
 
   # Binary caches for CachyOS kernel
   nix.settings.substituters = [
-    "https://cache.cachyos.org"
     "https://hyprland.cachix.org"
     "https://nix-community.cachix.org"
     "https://attic.xuyh0120.win/lantian"
@@ -115,6 +128,10 @@
     "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc="
     "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
   ];
+
+  # Registry pinning for instant shell startups
+  nix.registry.nixpkgs.flake = inputs.nixpkgs;
+  nix.channel.enable = false; # We are using flakes
 
   # Enable performance optimizations
   myModules.performance.enable = true;

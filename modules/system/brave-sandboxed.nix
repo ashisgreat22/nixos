@@ -1,4 +1,3 @@
-# Brave Sandboxed with nix-bwrapper
 {
   config,
   lib,
@@ -150,4 +149,26 @@ in
       };
     })
   ];
+
+  environment.systemPackages =
+    let
+      vpnLauncher = pkgs.writeShellScriptBin "brave-vpn" ''
+        exec /home/ashie/nixos/scripts/launch-vpn-app.sh ${pkgs.brave-sandboxed}/bin/brave "$@"
+      '';
+
+      desktopItem = pkgs.makeDesktopItem {
+        name = "brave-vpn";
+        desktopName = "Brave (VPN)";
+        exec = "${vpnLauncher}/bin/brave-vpn";
+        icon = "brave-browser";
+        categories = [
+          "Network"
+          "WebBrowser"
+        ];
+      };
+    in
+    [
+      vpnLauncher
+      desktopItem
+    ];
 }

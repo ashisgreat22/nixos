@@ -9,6 +9,8 @@
   imports = [
     ./common.nix
     ./security.nix
+    ./mac-randomization.nix
+    ./usbguard.nix
     ./kernel-hardening.nix
     ./secure-boot.nix
     ./dns-over-tls.nix
@@ -31,5 +33,8 @@
     ./spotify-sandboxed.nix
     ./performance.nix
     ./vesktop-sandboxed.nix
+    ./tutanota-sandboxed.nix
+    ./hardened-malloc.nix
+    ./searxng.nix
   ];
 }

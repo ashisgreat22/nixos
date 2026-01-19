@@ -1,4 +1,3 @@
-# Firefox Sandboxed with nix-bwrapper
 {
   config,
   lib,

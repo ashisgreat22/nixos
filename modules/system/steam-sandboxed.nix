@@ -95,7 +95,6 @@ in
             "$HOME/.local/share/color-schemes"
           ];
           readWrite = [
-            "$HOME/Games"
             "$HOME/.steam"
             "$HOME/.local/share/Steam"
             "$HOME/.local/share/umu"
@@ -104,6 +103,7 @@ in
             "$HOME/.local/share/icons"
             "$HOME/.local/share/Larian Studios"
             "$HOME/Desktop"
+            "/games/steam"
           ];
         };
 

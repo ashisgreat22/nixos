@@ -10,7 +10,7 @@
   sops.defaultSopsFormat = "yaml";
 
   sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
-  sops.age.keyFile = "/home/ashie/.config/sops/age/keys.txt";
+  # sops.age.keyFile = "/home/ashie/.config/sops/age/keys.txt";
   # WireGuard / Gluetun secrets
   sops.secrets.wireguard_private_key = {
     owner = "ashie";
@@ -41,6 +41,12 @@
       WIREGUARD_PUBLIC_KEY=${config.sops.placeholder.wireguard_public_key}
       WIREGUARD_ENDPOINT_IP=${config.sops.placeholder.wireguard_endpoint_ip}
       WIREGUARD_ENDPOINT_PORT=${config.sops.placeholder.wireguard_endpoint_port}
+      WIREGUARD_PRIVATE_KEY=${config.sops.placeholder.wireguard_private_key}
+      WIREGUARD_ADDRESSES=${config.sops.placeholder.wireguard_addresses}
+      WIREGUARD_PRESHARED_KEY=${config.sops.placeholder.wireguard_preshared_key}
+      WIREGUARD_MTU=1320
+      VPN_SERVICE_PROVIDER=custom
+      VPN_TYPE=wireguard
     '';
   };
 

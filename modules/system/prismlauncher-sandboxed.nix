@@ -53,28 +53,29 @@ in
       prismlauncher-sandboxed = bwrapperPkgs.mkBwrapper {
         app = {
           id = "org.prismlauncher.PrismLauncher";
-          package =
-            inputs.prismlauncher.packages.${pkgs.stdenv.hostPlatform.system}.prismlauncher.overrideAttrs
-              (old: {
-                pname = "prismlauncher";
-                version = old.version or "9.1";
-                buildInputs = (old.buildInputs or [ ]) ++ runtimeLibs ++ [ pkgs.mimalloc ];
+          package = pkgs.prismlauncher.overrideAttrs (old: {
+            pname = "prismlauncher";
+            version = old.version or "9.1";
+            buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.mimalloc ];
 
-                qtWrapperArgs = (old.qtWrapperArgs or [ ]) ++ [
-                  "--set MIMALLOC_PATH ${pkgs.mimalloc}/lib/libmimalloc.so"
-                  "--prefix LD_PRELOAD : ${pkgs.mimalloc}/lib/libmimalloc.so"
-                  "--prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath runtimeLibs}"
-                  "--prefix QT_PLUGIN_PATH : ${pkgs.kdePackages.qtstyleplugin-kvantum}/lib/qt6/plugins"
-                ];
-              });
+            # Keep runtimeLibs in closure without injecting them into environment
+            postInstall = (old.postInstall or "") + ''
+              mkdir -p $out/share/prismlauncher-sandboxed
+              echo "${lib.makeLibraryPath runtimeLibs}" > $out/share/prismlauncher-sandboxed/libs
+            '';
+
+            qtWrapperArgs = (old.qtWrapperArgs or [ ]) ++ [
+              "--set MIMALLOC_PATH ${pkgs.mimalloc}/lib/libmimalloc.so"
+              "--prefix LD_PRELOAD : ${pkgs.mimalloc}/lib/libmimalloc.so"
+            ];
+          });
 
           env = {
             # Propagate XDG_DATA_DIRS so themes/icons can be found
-            XDG_DATA_DIRS = "$XDG_DATA_DIRS";
-            GTK_THEME = "catppuccin-mocha-mauve-standard";
-            QT_QPA_PLATFORMTHEME = "gtk3";
-            QT_STYLE_OVERRIDE = "kvantum";
+            # XDG_DATA_DIRS = "$XDG_DATA_DIRS";
             BROWSER = "firefox";
+            QT_QPA_PLATFORMTHEME = "";
+            QT_STYLE_OVERRIDE = "fusion";
           };
         };
 
@@ -103,7 +104,7 @@ in
           "--dir /run/user"
           "--dir /run/user/${toString config.users.users.ashie.uid}"
           # Bind ro system paths commonly needed
-          "--ro-bind-try /run/current-system /run/current-system"
+          # "--ro-bind-try /run/current-system /run/current-system"
           "--ro-bind-try /run/opengl-driver /run/opengl-driver"
           "--ro-bind-try /run/opengl-driver-32 /run/opengl-driver-32"
           "--dir /run/systemd/resolve"

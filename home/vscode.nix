@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 
 let
   # Wrap Antigravity in an FHS environment to support dynamically linked binaries
@@ -195,6 +200,9 @@ in
               DEFAULT_PORT = "9090";
             };
           };
+          #   "nixos" = {
+          #     command = "${inputs.mcp-nixos.packages.${pkgs.system}.default}/bin/mcp-nixos";
+          #   };
         };
       };
     };
@@ -224,6 +232,9 @@ in
             DEFAULT_PORT = "9090";
           };
         };
+        # nixos = {
+        #   command = "${inputs.mcp-nixos.packages.${pkgs.system}.default}/bin/mcp-nixos";
+        # };
       };
     };
   };

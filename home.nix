@@ -6,9 +6,12 @@
 }:
 {
   imports = [
+    ./modules/home/gluetun-user.nix
+    ./modules/home/cosmic.nix
     inputs.sops-nix.homeManagerModules.sops
     inputs.steam-config-nix.homeModules.default
     inputs.catppuccin.homeManagerModules.catppuccin
+    inputs.nixvim.homeManagerModules.nixvim
     # inputs.unified-router-mcp.homeManagerModules.default
     ./modules/home # Import all Home Manager modules
     ./hosts/nixos/home-modules.nix # Host-specific module configuration
@@ -22,6 +25,9 @@
 
   home.packages = [
     pkgs.mimalloc
+    pkgs.jellyfin-media-player
+    pkgs.bemoji
+    pkgs.wtype
     (pkgs.writeShellScriptBin "opencode" ''
       export OPENAI_BASE_URL="https://api.ashisgreat.xyz/v1"
       export OPENAI_API_KEY="$(cat ${config.sops.secrets.master_api_key.path})"
@@ -170,6 +176,19 @@
     };
   };
 
+  xdg.desktopEntries.youtube = {
+    name = "YouTube";
+    genericName = "Video Player";
+    exec = "brave --app=https://youtube.com";
+    terminal = false;
+    categories = [
+      "Network"
+      "Video"
+      "AudioVideo"
+    ];
+    icon = "youtube";
+  };
+
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
@@ -189,6 +208,19 @@
       "application/x-extension-xhtml" = [ "nix.bwrapper.firefox.desktop" ];
       "application/x-extension-xht" = [ "nix.bwrapper.firefox.desktop" ];
       "application/pdf" = [ "nix.bwrapper.firefox.desktop" ];
+    };
+  };
+
+  systemd.user.services.ydotoold = {
+    Unit = {
+      Description = "ydotool daemon";
+    };
+    Service = {
+      ExecStart = "${pkgs.ydotool}/bin/ydotoold --socket-path %t/ydotoold.sock";
+      Restart = "on-failure";
+    };
+    Install = {
+      WantedBy = [ "default.target" ];
     };
   };
 }

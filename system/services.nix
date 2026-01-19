@@ -5,7 +5,12 @@
   ...
 }:
 {
-  services.flatpak.enable = true;
+  services.flatpak.enable = false;
+
+  services.snowflake-proxy = {
+    enable = true;
+    capacity = 10;
+  };
 
   services.timesyncd.enable = false;
   services.chrony = {
@@ -46,6 +51,9 @@
     settings = {
       PasswordAuthentication = false;
       PermitRootLogin = "no";
+      X11Forwarding = false;
+      AllowAgentForwarding = false;
+      UseDns = false;
     };
   };
 
@@ -70,20 +78,37 @@
     globalConfig = ''
       acme_dns cloudflare {env.CF_API_TOKEN}
       servers {
-        protocols h1 h2
+        protocols h1 h2 h3
       }
     '';
 
-    virtualHosts."api.ashisgreat.xyz" = {
-      extraConfig = ''
-        # Security headers
+    extraConfig = ''
+      (security_headers) {
         header {
           Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
           X-Content-Type-Options "nosniff"
-          X-Frame-Options "DENY"
+          X-Frame-Options "SAMEORIGIN"
           Referrer-Policy "strict-origin-when-cross-origin"
-          Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
+          X-XSS-Protection "1; mode=block"
+          Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()"
           -Server
+        }
+      }
+    '';
+
+    virtualHosts."search.ashisgreat.xyz" = {
+      extraConfig = ''
+        import security_headers
+        reverse_proxy 127.0.0.1:8888
+      '';
+    };
+
+    virtualHosts."api.ashisgreat.xyz" = {
+      extraConfig = ''
+        import security_headers
+        header {
+          X-Frame-Options "DENY"
+          Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
         }
         reverse_proxy 127.0.0.1:8045
       '';
@@ -91,14 +116,9 @@
 
     virtualHosts."chat.ashisgreat.xyz" = {
       extraConfig = ''
-        # Security headers
+        import security_headers
         header {
-          Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-          X-Content-Type-Options "nosniff"
-          X-Frame-Options "SAMEORIGIN"
-          Referrer-Policy "strict-origin-when-cross-origin"
           Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' wss: https:; worker-src 'self' blob:;"
-          -Server
         }
         reverse_proxy 127.0.0.1:3000
       '';
@@ -106,17 +126,9 @@
 
     virtualHosts."stream.ashisgreat.xyz" = {
       extraConfig = ''
-        # Basic Auth
+        import security_headers
         basic_auth {
             admin $2a$14$2kaAS6oLx6SdyuM2lksnYOZidfRWb7AGPXT5hhg/s5nseL7bjHsx2
-        }
-        # Security headers
-        header {
-          Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-          X-Content-Type-Options "nosniff"
-          X-Frame-Options "SAMEORIGIN"
-          Referrer-Policy "strict-origin-when-cross-origin"
-          -Server
         }
         reverse_proxy 127.0.0.1:3333
       '';
@@ -124,16 +136,59 @@
 
     virtualHosts."stream-api.ashisgreat.xyz" = {
       extraConfig = ''
-        # Security headers
+        import security_headers
         header {
-          Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-          X-Content-Type-Options "nosniff"
-          # Backend API needs to be accessible by frontend
           Access-Control-Allow-Origin "https://stream.ashisgreat.xyz"
-          -Server
         }
-
         reverse_proxy 127.0.0.1:3334
+      '';
+    };
+
+    virtualHosts."sonarr.ashisgreat.xyz" = {
+      extraConfig = ''
+        import security_headers
+        reverse_proxy 127.0.0.1:8989
+      '';
+    };
+
+    virtualHosts."radarr.ashisgreat.xyz" = {
+      extraConfig = ''
+        import security_headers
+        reverse_proxy 127.0.0.1:7878
+      '';
+    };
+
+    virtualHosts."prowlarr.ashisgreat.xyz" = {
+      extraConfig = ''
+        import security_headers
+        reverse_proxy 127.0.0.1:9696
+      '';
+    };
+
+    virtualHosts."torrent.ashisgreat.xyz" = {
+      extraConfig = ''
+        import security_headers
+        reverse_proxy 127.0.0.1:8080
+      '';
+    };
+
+    virtualHosts."jellyfin.ashisgreat.xyz" = {
+      extraConfig = ''
+        import security_headers
+        reverse_proxy 127.0.0.1:8096
+      '';
+    };
+
+    virtualHosts."jellyseer.ashisgreat.xyz" = {
+      extraConfig = ''
+        import security_headers
+        reverse_proxy 127.0.0.1:5055
+      '';
+    };
+
+    virtualHosts."jellyseerr.ashisgreat.xyz" = {
+      extraConfig = ''
+        redir https://jellyseer.ashisgreat.xyz{uri}
       '';
     };
 
@@ -179,4 +234,33 @@
   };
 
   systemd.services.caddy.serviceConfig.EnvironmentFile = config.sops.templates."caddy.env".path;
+
+  # Hardening for Snowflake Proxy
+  systemd.services.snowflake-proxy.serviceConfig = {
+    DynamicUser = true;
+    ProtectSystem = "strict";
+    ProtectHome = true;
+    PrivateTmp = true;
+    PrivateDevices = true;
+    ProtectKernelTunables = true;
+    ProtectControlGroups = true;
+    ProtectKernelModules = true;
+    MemoryDenyWriteExecute = true;
+    LockPersonality = true;
+    RestrictRealtime = true;
+    SystemCallFilter = [ "@system-service" "~@privileged" ];
+  };
+
+  # Hardening for DDClient
+  systemd.services.ddclient.serviceConfig = {
+    ProtectSystem = "full";
+    ProtectHome = true;
+    PrivateTmp = true;
+    PrivateDevices = true;
+    ProtectKernelTunables = true;
+    ProtectControlGroups = true;
+    ProtectKernelModules = true;
+    ReadWritePaths = [ "/run/ddclient" ];
+    NoNewPrivileges = true;
+  };
 }

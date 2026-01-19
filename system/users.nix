@@ -18,6 +18,7 @@
       "podman"
       "render"
       "video"
+      "media"
     ];
     packages = with pkgs; [
       tree
@@ -45,13 +46,13 @@
     subUidRanges = [
       {
         startUid = 100000;
-        count = 100000000;
+        count = 65536;
       }
     ];
     subGidRanges = [
       {
         startGid = 100000;
-        count = 100000000;
+        count = 65536;
       }
     ];
   };
@@ -71,13 +72,13 @@
     subUidRanges = [
       {
         startUid = 200000;
-        count = 100000000;
+        count = 65536;
       }
     ];
     subGidRanges = [
       {
         startGid = 200000;
-        count = 100000000;
+        count = 65536;
       }
     ];
   };

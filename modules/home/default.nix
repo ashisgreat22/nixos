@@ -15,6 +15,7 @@
     ./browser-container-update.nix
     ./proton-cachyos-updater.nix
     ./cli-tools.nix
+    ./nixvim.nix
 
     # ./unified-router.nix
     ./sillytavern.nix
@@ -24,5 +25,6 @@
     ./polling-rate.nix
     ./antigravity2api.nix
     ./theme.nix
+    ./prismlauncher.nix
   ];
 }

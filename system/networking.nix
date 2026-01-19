@@ -20,6 +20,11 @@
       Name = "br0";
     };
 
+    links."10-eth" = {
+      matchConfig.Name = "enp4s0";
+      linkConfig.MACAddressPolicy = "random";
+    };
+
     networks."10-eth" = {
       matchConfig.Name = "enp4s0";
       networkConfig.Bridge = "br0";
@@ -45,7 +50,8 @@
   };
 
   # Basic firewall settings (Cloudflare rules are in the module)
-  networking.firewall.enable = false;
+  # networking.firewall.enable = true; # Handled by modules/system/cloudflare-firewall.nix
+  networking.nftables.enable = true;
 
   # Dynamic DNS for Cloudflare
   services.ddclient = {
@@ -59,6 +65,14 @@
       "chat.ashisgreat.xyz"
       "stream.ashisgreat.xyz"
       "stream-api.ashisgreat.xyz"
+      "sonarr.ashisgreat.xyz"
+      "radarr.ashisgreat.xyz"
+      "prowlarr.ashisgreat.xyz"
+      "torrent.ashisgreat.xyz"
+      "jellyfin.ashisgreat.xyz"
+      "jellyseer.ashisgreat.xyz"
+      "jellyseerr.ashisgreat.xyz"
+      "search.ashisgreat.xyz"
     ];
     interval = "10min";
     usev6 = "disabled";

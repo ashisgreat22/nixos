@@ -1,16 +1,3 @@
-# Caddy with Cloudflare DNS-01 ACME Module
-# Provides: Caddy reverse proxy with automatic SSL via Cloudflare DNS
-#
-# Usage:
-#   myModules.caddyCloudflare = {
-#     enable = true;
-#     email = "you@example.com";
-#     cloudflareApiTokenFile = config.sops.secrets.cloudflare_api_key.path;
-#     virtualHosts = {
-#       "api.example.com" = { reverseProxy = "127.0.0.1:8080"; };
-#     };
-#   };
-
 {
   config,
   lib,

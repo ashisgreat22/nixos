@@ -22,7 +22,7 @@
     fsType = "none";
     options = [
       "bind"
-      "X-systemd.after=games.mount"
+      "x-systemd.after=games.mount"
     ];
   };
 }

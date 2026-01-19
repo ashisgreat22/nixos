@@ -29,6 +29,11 @@
       zramAlgorithm = "zstd";
     };
 
+    # Hardened Malloc (Scudo)
+    hardenedMalloc = {
+      enable = false;
+    };
+
     # Secure Boot (Lanzaboote)
     # 1. sudo sbctl create-keys
     # 2. sudo sbctl enroll-keys -m
@@ -47,8 +52,9 @@
 
     # Cloudflare-only firewall rules
     cloudflareFirewall = {
-      enable = false;
-      enablePodmanWorkaround = false;
+      enable = true;
+      allowLocalTraffic = true;
+      enablePodmanWorkaround = true;
       restrictedPorts = [
         80
         443
@@ -79,6 +85,13 @@
     # Open WebUI System Service (Isolated)
     openWebUI = {
       enable = true;
+    };
+
+    # SearXNG (Meta-Search Engine)
+    searxng = {
+      enable = true;
+      port = 8888;
+      domain = "search.ashisgreat.xyz";
     };
   };
 }

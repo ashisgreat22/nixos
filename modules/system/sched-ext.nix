@@ -13,7 +13,7 @@ in
     enable = lib.mkEnableOption "sched-ext (scx) schedulers";
     
     scheduler = lib.mkOption {
-      type = lib.types.enum [ "scx_rustland" "scx_lavd" "scx_rusty" "scx_bpfland" ];
+      type = lib.types.enum [ "scx_lavd" "scx_rusty" "scx_bpfland" ];
       default = "scx_lavd";
       description = "The scx scheduler to run.";
     };

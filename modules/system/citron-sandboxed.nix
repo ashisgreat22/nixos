@@ -143,7 +143,9 @@ in
           # Create directories that bwrap will bind
           mkdir -p "$HOME/.cache/citron-tmp"
           mkdir -p "$HOME/.config/citron"
+          mkdir -p "$HOME/.config/Citron"
           mkdir -p "$HOME/.local/share/citron"
+          mkdir -p "$HOME/.local/share/Citron"
           mkdir -p "$HOME/Games/Switch"
         ''
         + (import ./sandbox-utils.nix { inherit pkgs lib; }).mkDbusProxyScript {
@@ -170,13 +172,6 @@ in
           # D-Bus session proxy only
           ''--bind "$XDG_RUNTIME_DIR/app/${appId}/bus" "$XDG_RUNTIME_DIR/bus"''
 
-          # Wayland socket
-          ''--bind "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"''
-
-          # PipeWire + Pulse
-          ''--bind "$XDG_RUNTIME_DIR/pipewire-0" "$XDG_RUNTIME_DIR/pipewire-0"''
-          ''--bind "$XDG_RUNTIME_DIR/pulse" "$XDG_RUNTIME_DIR/pulse"''
-
           # Manual mounts for data persistence
           "--ro-bind-try $HOME/.config/kdedefaults $HOME/.config/kdedefaults"
           "--ro-bind-try $HOME/.local/share/color-schemes $HOME/.local/share/color-schemes"
@@ -190,7 +185,9 @@ in
           # Read-write mounts
           "--bind $HOME/Games/Switch $HOME/Games/Switch"
           "--bind $HOME/.config/citron $HOME/.config/citron"
+          "--bind $HOME/.config/Citron $HOME/.config/Citron"
           "--bind $HOME/.local/share/citron $HOME/.local/share/citron"
+          "--bind $HOME/.local/share/Citron $HOME/.local/share/Citron"
           "--bind $HOME/.cache/citron-tmp $HOME/.cache/citron-tmp"
         ];
       };

@@ -138,13 +138,6 @@ in
             # D-Bus session proxy only
             ''--bind "$XDG_RUNTIME_DIR/app/io.github.faugus.Launcher/bus" "$XDG_RUNTIME_DIR/bus"''
 
-            # Wayland socket
-            ''--bind "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"''
-
-            # PipeWire + Pulse
-            ''--bind "$XDG_RUNTIME_DIR/pipewire-0" "$XDG_RUNTIME_DIR/pipewire-0"''
-            ''--bind "$XDG_RUNTIME_DIR/pulse" "$XDG_RUNTIME_DIR/pulse"''
-
             # dconf for GTK settings
             "--bind-try /run/user/${toString config.users.users.ashie.uid}/dconf /run/user/${toString config.users.users.ashie.uid}/dconf"
           ];

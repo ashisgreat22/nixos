@@ -10,6 +10,7 @@
     device = "nodev";
     useOSProber = false;
     configurationLimit = 10;
+    gfxmodeEfi = "auto";
   };
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.timeout = 5;

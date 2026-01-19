@@ -34,7 +34,7 @@
     git
     sbctl
     fuzzel
-    prismlauncher-sandboxed
+    # prismlauncher-sandboxed # Managed by Home Manager
     polychromatic
     vscodium
     kdePackages.dolphin
@@ -107,6 +107,7 @@
     openssl
     nspr
     firefox-sandboxed
+    tutanota-sandboxed
     brave-sandboxed
     eddie
     appimage-run

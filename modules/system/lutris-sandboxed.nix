@@ -76,7 +76,7 @@ in
           ];
 
           readWrite = [
-            "$HOME/Games"
+            "$HOME/Games/windows"
             "$HOME/.local/share/icons"
             "$HOME/.config/lutris"
             "$HOME/.local/share/lutris"

@@ -41,7 +41,9 @@ in
 
       Service = {
         ExecStartPre = pkgs.writeShellScript "antigravity2api-init" ''
-                       cat > ${workDir}/.env <<EOF
+          export PATH="${pkgs.coreutils}/bin:$PATH"
+          mkdir -p "${workDir}"
+          cat > "${workDir}/.env" <<EOF
           API_KEY=${cfg.credentials.apiKey}
           ADMIN_USERNAME=${cfg.credentials.username}
           ADMIN_PASSWORD=${cfg.credentials.password}

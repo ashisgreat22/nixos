@@ -38,15 +38,15 @@
 
     # Gluetun VPN user service
     gluetunUser = {
-      enable = true;
+      enable = false;
       environmentFile = "/run/secrets/rendered/gluetun.env";
     };
 
     # qBittorrent through VPN
     qbittorrentVpn = {
-      enable = true;
+      enable = false;
       configDir = "/home/ashie/qbittorrent/config";
-      downloadsDir = "/home/ashie/qbittorrent/downloads";
+      downloadsDir = "/home/ashie/Media/Torrents";
     };
 
     # Auto-update browser containers
@@ -60,6 +60,11 @@
       arch = "x86_64_v3";
     };
 
+    # PrismLauncher Sandboxed
+    prismlauncher = {
+      enable = true;
+    };
+
     # Unified API Router
     # unifiedRouter = {
     #   enable = true;
@@ -68,7 +73,7 @@
 
     # SillyTavern Frontend
     sillytavern = {
-      enable = true;
+      enable = false;
     };
 
     # Noctalia Shell

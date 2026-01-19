@@ -66,6 +66,9 @@ in
       "randomize_kstack_offset=on"
       "vsyscall=none"
       "oops=panic"
+      "debugfs=off" 
+      "module.sig_enforce=1"
+      "lockdown=confidentiality"
     ];
 
     # Kernel sysctl hardening
@@ -104,6 +107,13 @@ in
       "net.ipv4.tcp_rmem" = "4096 87380 2500000";
       "net.ipv4.tcp_wmem" = "4096 65536 2500000";
       "net.core.netdev_max_backlog" = 5000;
+
+      # Advanced Security
+      "net.core.bpf_jit_harden" = 2;
+      "fs.suid_dumpable" = 0;
+      "kernel.sysrq" = 0;
+      "net.ipv4.conf.all.accept_source_route" = 0;
+      "net.ipv6.conf.all.accept_source_route" = 0;
     };
 
     # Set IO Scheduler to kyber for NVMe and bfq for SATA

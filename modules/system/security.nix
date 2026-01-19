@@ -1,14 +1,3 @@
-# Security Hardening Module
-# Provides: doas (sudo replacement), audit logging, AppArmor, core dump prevention
-#
-# Usage:
-#   myModules.security = {
-#     enable = true;
-#     enableAudit = true;      # default: true
-#     enableAppArmor = true;   # default: true
-#     useDoas = true;          # default: true (replaces sudo)
-#   };
-
 {
   config,
   lib,
@@ -64,6 +53,14 @@ in
         keepEnv = false;
         persist = true;
       }
+    ];
+
+    # Proc hardening (Hide other users' processes)
+    boot.specialFileSystems."/proc".options = [
+      "nosuid"
+      "nodev"
+      "noexec"
+      "hidepid=2"
     ];
 
     # Security audit logging

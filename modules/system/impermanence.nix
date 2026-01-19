@@ -34,6 +34,12 @@
       "/var/lib/bluetooth" # Bluetooth pairings
       "/var/lib/sbctl" # Secure Boot Keys
       "/etc/NetworkManager/system-connections" # Wifi/Ethernet profiles
+      "/var/lib/sonarr"
+      "/var/lib/radarr"
+      "/var/lib/prowlarr"
+      "/var/lib/qbittorrent"
+      "/var/lib/jellyfin"
+      "/var/lib/jellyseerr"
     ];
 
     files = [
@@ -47,6 +53,7 @@
         "Music"
         "Pictures"
         "Videos"
+        "Torrents"
         "nixos" # Config repo
         ".local/share/PrismLauncher" # Minecraft
         ".local/share/containers" # Rootless podman
@@ -58,10 +65,12 @@
         "git" # Git Repositories
         ".local/state" # Application State
         ".config/Antigravity" # Antigravity Config
+        ".config/modprobed-db" # Local modconfig database
         ".config/VSCodium" # Codium Config
         ".config/sops" # Sops Keys
         ".config/gh" # Github CLI Auth
         ".local/share/keyrings" # Gnome Keyrings (Passwords)
+        ".local/share/nvim" # NeoVim data (LazyVim, Mason, etc.)
         ".local/share/flatpak" # Flatpak Apps
         ".vscode" # VSCode Extensions
         ".vscode-oss" # VSCodium Extensions
@@ -71,6 +80,10 @@
         ".config/citron"
         ".local/share/citron"
         ".cache/lutris"
+        ".config/azahar"
+        ".local/share/azahar"
+        ".config/Citron"
+        ".local/share/Citron"
         ".local/share/umu"
         ".cache/mesa_shader_cache"
         # ".local/share/Steam" # Symlinked to /games/Steam (Already Persistent)
@@ -78,6 +91,8 @@
         ".config/steamtinkerlaunch" # Example of extra tools
         ".local/share/applications" # Desktop entries
         ".local/share/icons" # Application icons
+        ".local/bin" # User scripts
+        ".local/share/qBittorrent"
       ];
     };
   };

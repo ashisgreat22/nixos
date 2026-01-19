@@ -40,7 +40,7 @@ in
       azahar-sandboxed = bwrapperPkgs.mkBwrapper {
         app = {
           package = azahar;
-          id = "org.azahar_emu.azahar";
+          id = "org.azahar_emu.Azahar";
           env = {
             QT_QPA_PLATFORM = "wayland;xcb";
             XDG_CURRENT_DESKTOP = "KDE";
@@ -51,10 +51,7 @@ in
         fhsenv.bwrap.additionalArgs = [
           "--dir /run/systemd/resolve"
           "--ro-bind-try /run/systemd/resolve /run/systemd/resolve"
-          ''--bind "$XDG_RUNTIME_DIR/app/org.azahar_emu.azahar/bus" "$XDG_RUNTIME_DIR/bus"''
-          ''--bind "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"''
-          ''--bind "$XDG_RUNTIME_DIR/pipewire-0" "$XDG_RUNTIME_DIR/pipewire-0"''
-          ''--bind "$XDG_RUNTIME_DIR/pulse" "$XDG_RUNTIME_DIR/pulse"''
+          ''--bind "$XDG_RUNTIME_DIR/app/org.azahar_emu.Azahar/bus" "$XDG_RUNTIME_DIR/bus"''
         ];
 
         mounts = {
@@ -74,7 +71,7 @@ in
 
         dbus.enable = false;
         script.preCmds.stage2 = (import ./sandbox-utils.nix { inherit pkgs lib; }).mkDbusProxyScript {
-          appId = "org.azahar_emu.azahar";
+          appId = "org.azahar_emu.Azahar";
           enableSystemBus = false;
           proxyArgs = [
             "--filter"

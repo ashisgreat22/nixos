@@ -8,62 +8,73 @@
       url = "github:xddxdd/nix-cachyos-kernel";
     };
 
-    nix-flatpak = {
-      url = "github:gmodena/nix-flatpak/?ref=latest";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     sops-nix = {
-      url = "github:Mic92/sops-nix";
+      url = "github:Mic92/sops-nix?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     noctalia = {
-      url = "github:noctalia-dev/noctalia-shell";
+      url = "github:noctalia-dev/noctalia-shell?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     steam-config-nix = {
-      url = "github:different-name/steam-config-nix";
+      url = "github:different-name/steam-config-nix?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     prismlauncher = {
-      url = "github:PrismLauncher/PrismLauncher";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    opencode-flake = {
-      url = "github:AodhanHayter/opencode-flake";
+      url = "github:PrismLauncher/PrismLauncher?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     nix-bwrapper = {
-      url = "github:Naxdy/nix-bwrapper";
+      url = "github:Naxdy/nix-bwrapper?shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    opencode-flake = {
+      url = "github:AodhanHayter/opencode-flake?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     lanzaboote = {
-      url = "github:nix-community/lanzaboote";
+      url = "github:nix-community/lanzaboote?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     niri = {
-      url = "github:YaLTeR/niri";
+      url = "github:YaLTeR/niri?shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    mcp-nixos = {
+      url = "github:utensils/mcp-nixos?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     impermanence = {
-      url = "github:nix-community/impermanence";
+      url = "github:nix-community/impermanence?shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     catppuccin.url = "github:catppuccin/nix";
+
+    nixvim = {
+      url = "github:nix-community/nixvim?shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    cosmic-manager = {
+      url = "github:HeitorAugustoLN/cosmic-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
   };
 
   outputs =
@@ -72,9 +83,9 @@
       nixpkgs,
       home-manager,
       noctalia,
-      nix-flatpak,
       lanzaboote,
       niri,
+      cosmic-manager,
       ...
     }@inputs:
     {
@@ -110,9 +121,11 @@
           inputs.sops-nix.nixosModules.sops
           home-manager.nixosModules.home-manager
           inputs.catppuccin.nixosModules.catppuccin
+          inputs.nixvim.nixosModules.nixvim
           {
             home-manager = {
               extraSpecialArgs = { inherit inputs; };
+              sharedModules = [ inputs.cosmic-manager.homeManagerModules.cosmic-manager ];
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "backup";
@@ -132,9 +145,11 @@
           inputs.sops-nix.nixosModules.sops
           home-manager.nixosModules.home-manager
           inputs.catppuccin.nixosModules.catppuccin
+          inputs.nixvim.nixosModules.nixvim
           {
             home-manager = {
               extraSpecialArgs = { inherit inputs; };
+              sharedModules = [ inputs.cosmic-manager.homeManagerModules.cosmic-manager ];
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "backup";

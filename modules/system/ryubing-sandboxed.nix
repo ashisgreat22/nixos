@@ -109,13 +109,6 @@ in
           # D-Bus session proxy only
           ''--bind "$XDG_RUNTIME_DIR/app/${appId}/bus" "$XDG_RUNTIME_DIR/bus"''
 
-          # Wayland socket
-          ''--bind "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"''
-
-          # PipeWire + Pulse
-          ''--bind "$XDG_RUNTIME_DIR/pipewire-0" "$XDG_RUNTIME_DIR/pipewire-0"''
-          ''--bind "$XDG_RUNTIME_DIR/pulse" "$XDG_RUNTIME_DIR/pulse"''
-
           # Manual mounts for data persistence
           "--ro-bind-try $HOME/.config/kdedefaults $HOME/.config/kdedefaults"
           "--ro-bind-try $HOME/.local/share/color-schemes $HOME/.local/share/color-schemes"
