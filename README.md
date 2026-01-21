@@ -227,7 +227,6 @@ sops updatekeys secrets/secrets.yaml
 - `page_alloc.shuffle=1` - Randomizes page allocator
 - `randomize_kstack_offset=on` - Randomizes kernel stack
 - `vsyscall=none` - Disables legacy vsyscall
-- `debugfs=off` - Disables kernel debug interface
 - `oops=panic` - Panics on kernel oops
 
 **Sysctl Settings**:

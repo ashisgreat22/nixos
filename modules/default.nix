@@ -14,6 +14,6 @@
 { ... }:
 {
   imports = [
-    ./system
+    ./nixos
   ];
 }

@@ -55,10 +55,11 @@
       enable = true;
       allowLocalTraffic = true;
       enablePodmanWorkaround = true;
-      restrictedPorts = [
+      publicPorts = [
         80
         443
       ];
+      restrictedPorts = [ ];
     };
 
     # Base Podman container runtime

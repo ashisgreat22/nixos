@@ -18,9 +18,7 @@ if ! ip netns list | grep -q "$NAMESPACE"; then
   exit 1
 fi
 
-COMMAND="$@"
-
-if [ -z "$COMMAND" ]; then
+if [ "$#" -eq 0 ]; then
   echo "Usage: $0 <command> [args...]"
   exit 1
 fi
@@ -35,4 +33,4 @@ exec ip netns exec "$NAMESPACE" doas -u "$USER" env \
   XDG_RUNTIME_DIR="/run/user/$(id -u $USER)" \
   WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
   DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u $USER)/bus" \
-  $COMMAND
+  "$@"

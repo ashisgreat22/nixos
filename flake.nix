@@ -102,32 +102,31 @@
     {
       # Expose reusable NixOS modules for others to import
       nixosModules = {
-        security = import ./modules/system/security.nix;
-        kernelHardening = import ./modules/system/kernel-hardening.nix;
-        secureBoot = import ./modules/system/secure-boot.nix;
-        dnsOverTls = import ./modules/system/dns-over-tls.nix;
-        cloudflareFirewall = import ./modules/system/cloudflare-firewall.nix;
-        caddyCloudflare = import ./modules/system/caddy-cloudflare.nix;
-        podman = import ./modules/system/podman.nix;
-        browserVpn = import ./modules/system/browser-vpn.nix;
+        security = import ./modules/nixos/security.nix;
+        kernelHardening = import ./modules/nixos/kernel-hardening.nix;
+        secureBoot = import ./modules/nixos/secure-boot.nix;
+        dnsOverTls = import ./modules/nixos/dns-over-tls.nix;
+        cloudflareFirewall = import ./modules/nixos/cloudflare-firewall.nix;
+        podman = import ./modules/nixos/podman.nix;
+        browserVpn = import ./modules/nixos/browser-vpn.nix;
         default = import ./modules;
       };
 
       # Expose reusable Home Manager modules
       homeManagerModules = {
-        hyprlandCatppuccin = import ./modules/home/hyprland-catppuccin.nix;
-        gluetunUser = import ./modules/home/gluetun-user.nix;
-        qbittorrentVpn = import ./modules/home/qbittorrent-vpn.nix;
-        browserContainerUpdate = import ./modules/home/browser-container-update.nix;
-        protonCachyosUpdater = import ./modules/home/proton-cachyos-updater.nix;
-        default = import ./modules/home;
+        hyprlandCatppuccin = import ./modules/home-manager/hyprland-catppuccin.nix;
+        gluetunUser = import ./modules/home-manager/gluetun-user.nix;
+        qbittorrentVpn = import ./modules/home-manager/qbittorrent-vpn.nix;
+        browserContainerUpdate = import ./modules/home-manager/browser-container-update.nix;
+        protonCachyosUpdater = import ./modules/home-manager/proton-cachyos-updater.nix;
+        default = import ./modules/home-manager;
       };
 
       nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
-          ./configuration.nix
+          ./hosts/nixos/configuration.nix
           ./modules # Import all system modules
           inputs.sops-nix.nixosModules.sops
           inputs.nixflix.nixosModules.default
@@ -141,10 +140,10 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "backup";
-              users.ashie = import ./home.nix;
+              users.ashie = import ./hosts/nixos/home.nix;
             };
           }
-          ./modules/system/impermanence.nix
+          ./modules/nixos/impermanence.nix
         ];
       };
 
@@ -152,9 +151,10 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
-          ./configuration.nix
+          ./hosts/nixos/configuration.nix
           ./modules
           inputs.sops-nix.nixosModules.sops
+          inputs.nixflix.nixosModules.default
           home-manager.nixosModules.home-manager
           inputs.catppuccin.nixosModules.catppuccin
           inputs.nixvim.nixosModules.nixvim
@@ -165,10 +165,10 @@
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "backup";
-              users.ashie = import ./home.nix;
+              users.ashie = import ./hosts/nixos/home.nix;
             };
           }
-          ./modules/system/impermanence.nix
+          ./modules/nixos/impermanence.nix
         ];
       };
     };
