@@ -26,6 +26,7 @@
   home.packages = [
     pkgs.mimalloc
     pkgs.jellyfin-media-player
+    pkgs.joplin-desktop
     pkgs.bemoji
     pkgs.wtype
     (pkgs.writeShellScriptBin "opencode" ''

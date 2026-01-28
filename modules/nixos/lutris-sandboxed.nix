@@ -9,11 +9,9 @@
 }:
 
 let
-  # Apply the bwrapper overlay to get mkBwrapper
   bwrapperPkgs = pkgs.extend inputs.nix-bwrapper.overlays.default;
 in
 {
-  # Provide the sandboxed Lutris package
   nixpkgs.overlays = [
     (final: prev: {
       lutris-sandboxed = bwrapperPkgs.mkBwrapper {
@@ -34,13 +32,12 @@ in
               pkgs.vulkan-tools
               pkgs.unzip
               pkgs.cabextract
-              pkgs.xorg.xrandr
               pkgs.pciutils
               pkgs.gamemode.lib
               pkgs.xdg-utils
             ];
           };
-          isFhsenv = true; # Lutris uses buildFHSEnv
+          isFhsenv = true;
           id = "net.lutris.Lutris";
           env = {
             WEBKIT_DISABLE_DMABUF_RENDERER = 1;
@@ -51,7 +48,6 @@ in
             XDG_CURRENT_DESKTOP = "niri";
             XDG_SESSION_TYPE = "wayland";
             DBUS_SESSION_BUS_ADDRESS = "unix:path=$XDG_RUNTIME_DIR/bus";
-            # Ensure Vulkan loader finds the drivers
             VK_ICD_FILENAMES = "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json:/run/opengl-driver-32/share/vulkan/icd.d/radeon_icd.i686.json";
           };
         };
@@ -69,10 +65,10 @@ in
             "$HOME/.config/kdedefaults"
             "$HOME/.local/share/color-schemes"
             "$HOME/.local/share/Steam/compatibilitytools.d"
-            # GTK Theming
             "$HOME/.config/gtk-3.0"
             "$HOME/.config/gtk-4.0"
             "$HOME/.icons"
+            "/data/Torrents/Games" # Repack installers
           ];
 
           readWrite = [

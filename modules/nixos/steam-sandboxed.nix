@@ -128,6 +128,7 @@ in
             ''--talk="org.freedesktop.portal.*"''
             ''--own="com.valvesoftware.Steam"''
             ''--own="com.valvesoftware.Steam.*"''
+            ''--own="com.steampowered.PressureVessel.*"''
           ];
         };
 

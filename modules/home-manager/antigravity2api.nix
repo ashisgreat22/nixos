@@ -40,6 +40,7 @@ in
       };
 
       Service = {
+        WorkingDirectory = workDir;
         ExecStartPre = pkgs.writeShellScript "antigravity2api-init" ''
           export PATH="${pkgs.coreutils}/bin:$PATH"
           mkdir -p "${workDir}"
@@ -54,7 +55,7 @@ in
 
         ExecStart = ''
           ${pkgs.podman}/bin/podman run --replace --rm --name antigravity2api \
-            -p 8045:8045 \
+            -p 127.0.0.1:8045:8045 \
             -v ${workDir}/data:/app/data \
             -v ${workDir}/public/images:/app/public/images \
             -v ${workDir}/.env:/app/.env \

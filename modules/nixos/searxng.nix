@@ -215,32 +215,59 @@ in
       default = "search.ashisgreat.xyz";
       description = "Public domain name for SearXNG";
     };
+
+    donations = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      description = "Map of donation platform names to URLs (e.g. { patreon = '...'; })";
+    };
   };
 
   config = lib.mkIf cfg.enable {
     # Ensure Podman is enabled
     myModules.podman.enable = true;
 
-    # 1. Redis Container (Cache/Limiter)
-    virtualisation.oci-containers.containers."searxng-redis" = {
-      image = "docker.io/library/redis:alpine";
+    # ... (rest of config) ...
+
+    # 1. Create Bridge Network
+    systemd.services."create-searxng-network" = {
+      serviceConfig.Type = "oneshot";
+      serviceConfig.User = "ashie";
+      serviceConfig.RemainAfterExit = true;
+      after = [ "user-runtime-dir@1000.service" ];
+      requires = [ "user-runtime-dir@1000.service" ];
+      path = [ pkgs.podman ];
+      script = ''
+        export XDG_RUNTIME_DIR="/run/user/1000"
+        export HOME="/home/ashie"
+        podman network create searxng-net --ignore
+      '';
+    };
+
+    # 2. Valkey Container (Cache/Limiter)
+    virtualisation.oci-containers.containers."searxng-valkey" = {
+      image = "docker.io/valkey/valkey:alpine";
       cmd = [
-        "redis-server"
+        "valkey-server"
         "--save"
         ""
         "--appendonly"
         "no"
       ]; # Ephemeral cache, no persistence needed
-      ports = [ "127.0.0.1:6379:6379" ];
+      extraOptions = [
+        "--network=searxng-net"
+        "--network-alias=valkey"
+      ];
+      # No ports published to host for security
     };
 
-    # 2. SearXNG Container
+    # 3. SearXNG Container
     virtualisation.oci-containers.containers."searxng" = {
       image = "ghcr.io/searxng/searxng:latest";
       ports = [ "127.0.0.1:${toString cfg.port}:8080" ];
       environment = {
         "SEARXNG_BASE_URL" = "https://${cfg.domain}";
-        "SEARXNG_REDIS_URL" = "redis://searxng-redis:6379"; # Talk to Redis directly via container DNS
+        "SEARXNG_REDIS_URL" = "valkey://valkey:6379"; # Talk to Valkey via alias
         "SEARXNG_URL_BASE" = "https://${cfg.domain}";
       };
       environmentFiles = [
@@ -248,60 +275,67 @@ in
         config.sops.templates."searxng.env".path
       ];
       extraOptions = [
+        "--network=searxng-net"
         "--cap-drop=ALL"
         "--cap-add=CHOWN"
         "--cap-add=SETGID"
         "--cap-add=SETUID"
         "--cap-add=DAC_OVERRIDE"
-        "--add-host=host.containers.internal:host-gateway"
       ];
       volumes = [
         "${config.sops.templates."searxng_settings.yml".path}:/etc/searxng/settings.yml:ro"
         "${catppuccinCss}:/etc/searxng/custom.css:ro"
       ];
+      dependsOn = [ "searxng-valkey" ];
     };
 
-    # 3. Secrets Configuration
-    # We generate the settings.yml dynamically using sops templates to inject secrets if needed,
-    # or just to manage the config declaratively.
-    sops.templates."searxng.env".content = ''
-      SEARXNG_SECRET_KEY=${config.sops.placeholder.searxng_secret_key}
-    '';
+    sops.templates."searxng.env" = {
+      owner = "ashie";
+      content = ''
+        SEARXNG_SECRET_KEY=${config.sops.placeholder.searxng_secret_key}
+      '';
+    };
 
-    sops.templates."searxng_settings.yml".content = ''
-      use_default_settings: true
+    sops.templates."searxng_settings.yml" = {
+      owner = "ashie";
+      content = ''
+        use_default_settings: true
 
-      general:
-        debug: false
-        instance_name: "Ashie Search"
-        donations:
-          patreon: false
-          buymeacoffee: false
+        general:
+          debug: false
+          instance_name: "Ashie Search"
+          donation_url: ${if cfg.donations ? "Monero" then "\"${cfg.donations.Monero}\"" else "false"}
+          donations:
+            ${lib.concatStringsSep "\n            " (
+              lib.mapAttrsToList (name: url: "${name}: \"${url}\"") cfg.donations
+            )}
 
-      search:
-        safe_search: 0
-        autocomplete: "google"
-        default_lang: "en-US"
-        formats:
-          - html
-          - json
 
-      server:
-        port: 8080
-        bind_address: "0.0.0.0"
-        secret_key: "${config.sops.placeholder.searxng_secret_key}"
-        limiter: true
-        image_proxy: true
+        search:
+          safe_search: 0
+          autocomplete: "google"
+          default_lang: "en-US"
+          formats:
+            - html
+            - json
 
-      ui:
-        static_use_hash: true
-        custom_css: custom.css
-        theme_args:
-          simple_style: "auto"
+        server:
+          port: 8080
+          bind_address: "0.0.0.0"
+          secret_key: "${config.sops.placeholder.searxng_secret_key}"
+          limiter: true
+          image_proxy: true
 
-      redis:
-        url: redis://searxng-redis:6379/0
-    '';
+        ui:
+          static_use_hash: true
+          custom_css: custom.css
+          theme_args:
+            simple_style: "auto"
+
+        redis:
+          url: valkey://valkey:6379/0
+      '';
+    };
 
     # Placeholder secret definition (User must add this to secrets.yaml!)
     sops.secrets.searxng_secret_key = { };
@@ -314,13 +348,29 @@ in
     };
     systemd.services."podman-searxng".serviceConfig.Type = lib.mkForce "simple";
     systemd.services."podman-searxng".serviceConfig.Delegate = true;
+    systemd.services."podman-searxng".after = [
+      "create-searxng-network.service"
+      "user-runtime-dir@1000.service"
+    ];
+    systemd.services."podman-searxng".requires = [
+      "create-searxng-network.service"
+      "user-runtime-dir@1000.service"
+    ];
 
-    systemd.services."podman-searxng-redis".serviceConfig.User = lib.mkForce "ashie";
-    systemd.services."podman-searxng-redis".environment = {
+    systemd.services."podman-searxng-valkey".serviceConfig.User = lib.mkForce "ashie";
+    systemd.services."podman-searxng-valkey".environment = {
       HOME = "/home/ashie";
       XDG_RUNTIME_DIR = "/run/user/1000";
     };
-    systemd.services."podman-searxng-redis".serviceConfig.Type = lib.mkForce "simple";
-    systemd.services."podman-searxng-redis".serviceConfig.Delegate = true;
+    systemd.services."podman-searxng-valkey".serviceConfig.Type = lib.mkForce "simple";
+    systemd.services."podman-searxng-valkey".serviceConfig.Delegate = true;
+    systemd.services."podman-searxng-valkey".after = [
+      "create-searxng-network.service"
+      "user-runtime-dir@1000.service"
+    ];
+    systemd.services."podman-searxng-valkey".requires = [
+      "create-searxng-network.service"
+      "user-runtime-dir@1000.service"
+    ];
   };
 }

@@ -6,7 +6,7 @@
 }:
 
 {
-  sops.defaultSopsFile = ../secrets/secrets.yaml;
+  sops.defaultSopsFile = ../../../secrets/secrets.yaml;
   sops.defaultSopsFormat = "yaml";
 
   sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
@@ -96,13 +96,13 @@
   sops.secrets.prowlarr_api_key = { };
 
   # Authelia Secrets
-  sops.secrets.authelia_jwt_secret = {
-    owner = "authelia-main";
-  };
-  sops.secrets.authelia_session_secret = {
-    owner = "authelia-main";
-  };
-  sops.secrets.authelia_storage_encryption_key = {
-    owner = "authelia-main";
-  };
+  #  sops.secrets.authelia_jwt_secret = {
+  #    owner = "authelia-main";
+  #  };
+  #  sops.secrets.authelia_session_secret = {
+  #    owner = "authelia-main";
+  #  };
+  #  sops.secrets.authelia_storage_encryption_key = {
+  #    owner = "authelia-main";
+  #  };
 }

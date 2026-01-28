@@ -56,8 +56,8 @@
       allowLocalTraffic = true;
       enablePodmanWorkaround = true;
       publicPorts = [
-        80
         443
+        80
       ];
       restrictedPorts = [ ];
     };
@@ -93,6 +93,10 @@
       enable = true;
       port = 8888;
       domain = "search.ashisgreat.xyz";
+      donations = {
+        "Monero" =
+          "https://trocador.app/en/anonpay/?ticker_to=xmr&network_to=Mainnet&address=86piV4MV8wqSCTv3innkL1cMP54oShHfmVhq6QcFgvtuFTJqw6FkMgm4hgTaxV3reqXVmfGW5h5ffZanLM5XzW4nHUReno4&donation=True&simple_mode=True&amount=1.1e-05&name=Ashie&bgcolor=00000000";
+      };
     };
   };
 }

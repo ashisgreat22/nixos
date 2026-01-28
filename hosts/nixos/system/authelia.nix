@@ -7,7 +7,7 @@
 
 {
   services.authelia.instances.main = {
-    enable = true;
+    enable = false;
 
     # Secrets
     secrets = {

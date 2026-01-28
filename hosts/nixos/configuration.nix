@@ -53,8 +53,9 @@
     ./system/compatibility.nix # Compatibility layers (nix-ld)
     ./system/game-drive.nix
     ./system/vpn-namespace.nix # Isolated VPN Namespace
-    ./system/authelia.nix # SSO/2FA
+    #./system/authelia.nix # SSO/2FA
     ../../modules/nixos/media.nix # Arr Stack
+    ../../modules/nixos/steam-gamemode.nix # Steam GameMode Session
   ];
 
   nixpkgs.config.allowUnfreePredicate =
