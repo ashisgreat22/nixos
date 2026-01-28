@@ -52,7 +52,8 @@
     ./system/secrets.nix # SOPS secrets
     ./system/compatibility.nix # Compatibility layers (nix-ld)
     ./system/game-drive.nix
-    ./system/vpn-namespace.nix # Isolated VPN Namespace
+    ./system/vpn.nix # System-wide VPN
+    ./system/game-bypass.nix # Game bypass netns
     #./system/authelia.nix # SSO/2FA
     ../../modules/nixos/media.nix # Arr Stack
     ../../modules/nixos/steam-gamemode.nix # Steam GameMode Session

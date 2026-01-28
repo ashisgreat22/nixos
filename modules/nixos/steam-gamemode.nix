@@ -36,7 +36,7 @@
           fi
 
           echo "Launching gamescope..."
-          exec ${pkgs.gamescope}/bin/gamescope -f -e -- steam -gamepadui
+          exec ${pkgs.gamescope}/bin/gamescope -f -e -- game-bypass steam -gamepadui
         ''}
         Type=Application
       '';
