@@ -58,6 +58,8 @@ in
     };
 
     # Runtime kernel hardening
+    boot.kernelModules = lib.mkIf cfg.enableZram [ "zram" ];
+
     boot.kernelParams = [
       "slab_nomerge"
       "init_on_alloc=1"

@@ -199,6 +199,25 @@ let
         border-radius: 2em !important;
     }
   '';
+
+  anubisPolicy = pkgs.writeText "anubis-policy.yml" ''
+    bots:
+      - name: "Allow OpenSearch"
+        action: ALLOW
+        path_regex: ".*opensearch\\.xml.*"
+      - name: "Catch-All"
+        user_agent_regex: ".*"
+        action: CHALLENGE
+  '';
+
+  faviconsConfig = pkgs.writeText "favicons.toml" ''
+    [favicons]
+    cfg_schema = 1
+
+    [favicons.cache]
+    db_url = "/var/cache/searxng/faviconcache.db"
+    LIMIT_TOTAL_BYTES = 2147483648
+  '';
 in
 {
   options.myModules.searxng = {
@@ -236,11 +255,15 @@ in
       serviceConfig.RemainAfterExit = true;
       after = [ "user-runtime-dir@1000.service" ];
       requires = [ "user-runtime-dir@1000.service" ];
-      path = [ pkgs.podman ];
+      path = [
+        pkgs.podman
+        pkgs.shadow
+      ];
       script = ''
+        export PATH=/run/wrappers/bin:$PATH
         export XDG_RUNTIME_DIR="/run/user/1000"
         export HOME="/home/ashie"
-        podman network create searxng-net --ignore
+        podman network create searxng-net --subnet 10.89.2.0/24 --ignore
       '';
     };
 
@@ -263,8 +286,8 @@ in
 
     # 3. SearXNG Container
     virtualisation.oci-containers.containers."searxng" = {
-      image = "ghcr.io/searxng/searxng:latest";
-      ports = [ "127.0.0.1:${toString cfg.port}:8080" ];
+      image = "ghcr.io/privau/searxng:latest";
+      # ports = [ "127.0.0.1:${toString cfg.port}:8080" ]; # Port moved to Anubis
       environment = {
         "SEARXNG_BASE_URL" = "https://${cfg.domain}";
         "SEARXNG_REDIS_URL" = "valkey://valkey:6379"; # Talk to Valkey via alias
@@ -276,6 +299,7 @@ in
       ];
       extraOptions = [
         "--network=searxng-net"
+        "--network-alias=searxng"
         "--cap-drop=ALL"
         "--cap-add=CHOWN"
         "--cap-add=SETGID"
@@ -285,8 +309,39 @@ in
       volumes = [
         "${config.sops.templates."searxng_settings.yml".path}:/etc/searxng/settings.yml:ro"
         "${catppuccinCss}:/etc/searxng/custom.css:ro"
+        "${faviconsConfig}:/etc/searxng/favicons.toml:ro"
+        "searxng-cache:/var/cache/searxng"
       ];
       dependsOn = [ "searxng-valkey" ];
+    };
+
+    # 4. Anubis Container (AI Firewall)
+    virtualisation.oci-containers.containers."searxng-anubis" = {
+      image = "ghcr.io/techarohq/anubis:latest";
+      ports = [ "127.0.0.1:${toString cfg.port}:8080" ];
+      environment = {
+        "TARGET" = "http://searxng:8080";
+        "BIND" = ":8080";
+        "POLICY_FNAME" = "/etc/anubis/policy.yml";
+      };
+      extraOptions = [
+        "--network=searxng-net"
+      ];
+      volumes = [
+        "${anubisPolicy}:/etc/anubis/policy.yml:ro"
+      ];
+      dependsOn = [ "searxng" ];
+    };
+
+    # 5. Permanent NAT Fix for SearXNG Network
+    networking.nftables.tables.searxng-nat = {
+      family = "inet";
+      content = ''
+        chain postrouting {
+          type nat hook postrouting priority srcnat; policy accept;
+          ip saddr 10.89.2.0/24 masquerade
+        }
+      '';
     };
 
     sops.templates."searxng.env" = {
@@ -310,9 +365,16 @@ in
               lib.mapAttrsToList (name: url: "${name}: \"${url}\"") cfg.donations
             )}
 
+        engines:
+          - name: brave
+            engine: brave
+            api_key: "${config.sops.placeholder.searxng_brave_api_key}"
+            tokens: ["${config.sops.placeholder.searxng_private_token}"]
+
 
         search:
           safe_search: 0
+          favicon_resolver: "duckduckgo"
           autocomplete: "google"
           default_lang: "en-US"
           formats:
@@ -327,18 +389,25 @@ in
           image_proxy: true
 
         ui:
+          default_theme: simple
+          default_theme_style: kagi
           static_use_hash: true
-          custom_css: custom.css
-          theme_args:
-            simple_style: "auto"
+          # custom_css: custom.css
+          # theme_args:
+          #   simple_style: kagi
+
+          hostname_replace:
+            '(^|.*\.)reddit\.com$': 'reddit.ashisgreat.xyz'
 
         redis:
           url: valkey://valkey:6379/0
       '';
     };
 
-    # Placeholder secret definition (User must add this to secrets.yaml!)
+    # Secret definitions
     sops.secrets.searxng_secret_key = { };
+    sops.secrets.searxng_brave_api_key = { };
+    sops.secrets.searxng_private_token = { };
 
     # Rootless Overrides
     systemd.services."podman-searxng".serviceConfig.User = lib.mkForce "ashie";
@@ -351,10 +420,12 @@ in
     systemd.services."podman-searxng".after = [
       "create-searxng-network.service"
       "user-runtime-dir@1000.service"
+      "network-online.target"
     ];
     systemd.services."podman-searxng".requires = [
       "create-searxng-network.service"
       "user-runtime-dir@1000.service"
+      "network-online.target"
     ];
 
     systemd.services."podman-searxng-valkey".serviceConfig.User = lib.mkForce "ashie";
@@ -367,10 +438,30 @@ in
     systemd.services."podman-searxng-valkey".after = [
       "create-searxng-network.service"
       "user-runtime-dir@1000.service"
+      "network-online.target"
     ];
     systemd.services."podman-searxng-valkey".requires = [
       "create-searxng-network.service"
       "user-runtime-dir@1000.service"
+      "network-online.target"
+    ];
+
+    systemd.services."podman-searxng-anubis".serviceConfig.User = lib.mkForce "ashie";
+    systemd.services."podman-searxng-anubis".environment = {
+      HOME = "/home/ashie";
+      XDG_RUNTIME_DIR = "/run/user/1000";
+    };
+    systemd.services."podman-searxng-anubis".serviceConfig.Type = lib.mkForce "simple";
+    systemd.services."podman-searxng-anubis".serviceConfig.Delegate = true;
+    systemd.services."podman-searxng-anubis".after = [
+      "create-searxng-network.service"
+      "user-runtime-dir@1000.service"
+      "network-online.target"
+    ];
+    systemd.services."podman-searxng-anubis".requires = [
+      "create-searxng-network.service"
+      "user-runtime-dir@1000.service"
+      "network-online.target"
     ];
   };
 }

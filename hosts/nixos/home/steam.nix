@@ -19,22 +19,4 @@
     };
   };
 
-  # Override Steam desktop entry to use bypass
-  xdg.desktopEntries.steam = {
-    name = "Steam";
-    genericName = "Application Store";
-    exec = "game-bypass steam %U";
-    terminal = false;
-    icon = "steam";
-    categories = [
-      "Network"
-      "FileTransfer"
-      "Game"
-    ];
-    mimeType = [
-      "x-scheme-handler/steam"
-      "x-scheme-handler/steamlink"
-    ];
-    prefetchIface = "steam";
-  };
 }

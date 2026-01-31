@@ -48,6 +48,7 @@ in
         TZ = "Europe/Berlin";
         DOT = "off"; # DNS over TLS off (optional)
         FIREWALL_OUTBOUND_SUBNETS = "10.89.0.0/24"; # Allow access to local docker network
+        FIREWALL_VPN_INPUT_PORTS = "36630"; # Allow incoming torrent traffic
       };
       extraOptions = [
         "--cap-add=NET_ADMIN"

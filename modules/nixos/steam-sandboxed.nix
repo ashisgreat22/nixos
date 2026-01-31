@@ -104,6 +104,9 @@ in
             "$HOME/.local/share/Larian Studios"
             "$HOME/Desktop"
             "/games/steam"
+            "/games/windows/Modlist"
+            "/games/windows/Modlist_Downloads"
+            "$HOME/Games/windows/Modlist/Nordic"
           ];
         };
 

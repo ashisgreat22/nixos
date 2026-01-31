@@ -99,9 +99,18 @@ in
           # PipeWire + Pulse
           ''--bind "$XDG_RUNTIME_DIR/pipewire-0" "$XDG_RUNTIME_DIR/pipewire-0"''
           ''--bind "$XDG_RUNTIME_DIR/pulse" "$XDG_RUNTIME_DIR/pulse"''
+
+          # Hardware access
+          "--dev-bind /dev/dri /dev/dri"
+          "--dev-bind /dev/shm /dev/shm"
+          "--ro-bind /sys /sys"
+
           # Bind system themes to /usr/share
           "--ro-bind /run/current-system/sw/share/themes /usr/share/themes"
           "--ro-bind /run/current-system/sw/share/icons /usr/share/icons"
+          # OpenGL/Vulkan drivers
+          "--ro-bind-try /run/opengl-driver /run/opengl-driver"
+          "--ro-bind-try /run/opengl-driver-32 /run/opengl-driver-32"
         ];
 
         # Disable built-in DBus module (invokes bwrap without --unshare-user)

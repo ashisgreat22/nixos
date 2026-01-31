@@ -89,6 +89,20 @@ let
   antigravityFHSLauncher = pkgs.writeShellScriptBin "antigravity-fhs" ''
     exec ${antigravityWrapped}/bin/antigravity "$@"
   '';
+
+  # Helper to adapt VS Code extensions for Antigravity
+  # Home Manager expects extensions to be in share/antigravity/extensions based on the package name,
+  # but standard extensions are in share/vscode/extensions.
+  adaptToAntigravity = ext: pkgs.symlinkJoin {
+    name = "${ext.name}-antigravity";
+    paths = [ ext ];
+    # Ensure passthru attributes are preserved (though symlinkJoin usually handles this, specific ones might help)
+    inherit (ext) meta; 
+    postBuild = ''
+      mkdir -p $out/share/antigravity
+      ln -sf ${ext}/share/vscode/extensions $out/share/antigravity/extensions
+    '';
+  };
 in
 {
   home.packages = [
@@ -118,7 +132,7 @@ in
       enableExtensionUpdateCheck = false;
 
       # Extensions from nixpkgs
-      extensions = with pkgs.vscode-extensions; [
+      extensions = map adaptToAntigravity (with pkgs.vscode-extensions; [
         # Theme & Icons
         catppuccin.catppuccin-vsc
         catppuccin.catppuccin-vsc-icons
@@ -160,7 +174,7 @@ in
 
         # Formatters
         esbenp.prettier-vscode
-      ];
+      ]);
 
       # User settings (settings.json equivalent)
       userSettings = {
