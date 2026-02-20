@@ -3,11 +3,12 @@
   lib,
   pkgs,
   inputs,
-  ...
-}:
+  ...}:
 
 let
+  cfg = config.myModules.tutanotaSandboxed;
   bwrapperPkgs = pkgs.extend inputs.nix-bwrapper.overlays.default;
+  sandboxUtils = import ./sandbox-utils.nix { inherit pkgs lib; };
 
   pname = "tutanota-desktop";
   version = "319.260107.1";
@@ -34,86 +35,73 @@ let
   };
 in
 {
-  nixpkgs.overlays = [
-    (final: prev: {
-      tutanota-sandboxed = bwrapperPkgs.mkBwrapper {
-        app = {
-          package = tutanota;
-          id = "com.tutanota.Tutanota";
-          env = {
-            XDG_DATA_DIRS = "$XDG_DATA_DIRS";
+  options.myModules.tutanotaSandboxed = {
+    enable = lib.mkEnableOption "sandboxed Tutanota Desktop with nix-bwrapper";
+
+    extraBindMounts = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "Extra paths to bind mount (read-write) into the sandbox";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    nixpkgs.overlays = [ 
+      (final: prev: {
+        tutanota-sandboxed = bwrapperPkgs.mkBwrapper {
+          app = {
+            package = tutanota;
+            id = "com.tutanota.Tutanota";
+            env = {
+              XDG_DATA_DIRS = "$XDG_DATA_DIRS";
+            };
           };
-        };
 
-        flatpak.enable = false;
+          flatpak.enable = false;
 
-        # Basic sandboxing
-        fhsenv.opts = {
-          unshareUser = true;
-          unshareUts = true;
-          unshareCgroup = true;
-          unsharePid = true;
-          unshareNet = false; # Needs network
-          unshareIpc = true;
-        };
+          # Basic sandboxing
+          fhsenv.opts = {
+            unshareUser = true;
+            unshareUts = true;
+            unshareCgroup = true;
+            unsharePid = true;
+            unshareNet = false; # Needs network
+            unshareIpc = true;
+          };
 
-        fhsenv.bwrap.baseArgs = lib.mkForce [
-          "--new-session"
-          "--proc /proc"
-          "--dev /dev"
-          "--dev-bind /dev/dri /dev/dri" # GPU acceleration
-          "--tmpfs /home"
-          "--tmpfs /tmp"
-          "--tmpfs /run"
-          "--dir /run/user"
-          "--dir /run/user/${toString config.users.users.ashie.uid}"
-          # System paths
-          "--ro-bind /sys /sys"
-          "--ro-bind-try /run/current-system /run/current-system"
-          "--ro-bind-try /run/opengl-driver /run/opengl-driver"
-          "--ro-bind-try /run/opengl-driver-32 /run/opengl-driver-32"
-          "--dir /run/systemd/resolve"
-          "--ro-bind-try /run/systemd/resolve /run/systemd/resolve"
-        ];
+          fhsenv.bwrap.baseArgs = lib.mkForce (sandboxUtils.mkCommonBindArgs { inherit config lib; } ++ sandboxUtils.mkGamingBindArgs { });
 
-        mounts = {
-          read = [
-            "$HOME/.config/fontconfig"
-            "$HOME/.local/share/fonts"
-            "$HOME/.icons"
-            "$HOME/.themes"
-            "$HOME/.local/share/themes"
-            "$HOME/.config/kdedefaults"
-            "$HOME/.local/share/color-schemes"
-          ];
-          readWrite = [
-            "$HOME/.config/tutanota-desktop"
-            "$HOME/Downloads"
+          mounts = {
+            read = sandboxUtils.mkGuiMounts.read;
+            readWrite = [
+              "$HOME/.config/tutanota-desktop"
+              "$HOME/Downloads"
+            ] ++ cfg.extraBindMounts;
+          };
+
+          dbus.enable = false;
+          script.preCmds.stage2 = sandboxUtils.mkDbusProxyScript {
+            appId = "com.tutanota.Tutanota";
+            enableSystemBus = false;
+            proxyArgs = [
+              "--filter"
+              ''--talk="org.freedesktop.portal.*"''
+              ''--talk="org.freedesktop.Notifications"''
+              ''--talk="org.freedesktop.secrets"''
+              ''--talk="org.gnome.keyring.SystemPrompter"'' # Often needed for secrets
+              ''--call="org.freedesktop.portal.*=*@/org/freedesktop/portal/desktop"''
+              ''--own="com.tutanota.Tutanota"''
+            ];
+          };
+
+          fhsenv.bwrap.additionalArgs = sandboxUtils.mkGuiBindArgs { } ++ [
+            # D-Bus session proxy only
+            ''--bind "$XDG_RUNTIME_DIR/app/com.tutanota.Tutanota/bus" "$XDG_RUNTIME_DIR/bus"''
           ];
         };
+      })
+    ];
 
-        dbus.enable = false;
-        script.preCmds.stage2 = (import ./sandbox-utils.nix { inherit pkgs lib; }).mkDbusProxyScript {
-          appId = "com.tutanota.Tutanota";
-          enableSystemBus = false;
-          proxyArgs = [
-            "--filter"
-            ''--talk="org.freedesktop.portal.*"''
-            ''--talk="org.freedesktop.Notifications"''
-            ''--talk="org.freedesktop.secrets"''
-            ''--talk="org.gnome.keyring.SystemPrompter"'' # Often needed for secrets
-            ''--call="org.freedesktop.portal.*=*@/org/freedesktop/portal/desktop"''
-            ''--own="com.tutanota.Tutanota"''
-          ];
-        };
-
-        fhsenv.bwrap.additionalArgs = [
-          # D-Bus session proxy only
-          ''--bind "$XDG_RUNTIME_DIR/app/com.tutanota.Tutanota/bus" "$XDG_RUNTIME_DIR/bus"''
-          # Wayland
-          ''--bind "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"''
-        ];
-      };
-    })
-  ];
+    environment.systemPackages = [ pkgs.tutanota-sandboxed ];
+  };
 }

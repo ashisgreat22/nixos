@@ -34,7 +34,7 @@
     git
     sbctl
     fuzzel
-    # prismlauncher-sandboxed # Managed by Home Manager
+    # prismlauncher-sandboxed # Managed by System Module
     polychromatic
     vscodium
     kdePackages.dolphin
@@ -58,22 +58,24 @@
     mangohud
     gamemode
     lact
+    umu-launcher
+    steam-run
     fastfetch
     hyfetch
     nautilus
-    lutris-sandboxed
-    steam-sandboxed
-    azahar-sandboxed
-    faugus-sandboxed
-    citron-sandboxed
-    ryubing-sandboxed
+    # lutris-sandboxed # Added by module
+    # steam-sandboxed # Added by module
+    # azahar-sandboxed # Added by module
+    # faugus-sandboxed # Added by module
+    # citron-sandboxed # Added by module
+    # ryubing-sandboxed # Added by module
     wireguard-tools
     jq
     grim
     vlc
     slurp
     wl-clipboard
-    vesktop-sandboxed
+    # vesktop-sandboxed # Added by module
     starship
     zip
     unzip
@@ -96,18 +98,18 @@
     stress-ng
     kdePackages.kleopatra
     kdePackages.ark
-    easyeffects
+
     dysk
     zstd
     podman
-    spotify-sandboxed
+    # spotify-sandboxed # Added by module
     jmtpfs
     glfw
     mlocate
     openssl
     nspr
-    firefox-sandboxed
-    tutanota-sandboxed
+    # firefox-sandboxed # Added by module
+    # tutanota-sandboxed # Added by module
     # brave-sandboxed # Imported via module, wrapper provided there
     eddie
     appimage-run
@@ -123,7 +125,13 @@
     protontricks
     file
     ffmpeg-full
+    gsettings-desktop-schemas
+    glib
+    gtk3
+    gtk4
   ];
+
+  programs.dconf.enable = true;
 
   environment.variables = {
     QT_QPA_PLATFORMTHEME = "qt6ct";

@@ -8,6 +8,8 @@
   # Enable early KMS for the prompt
   boot.initrd.kernelModules = [ "amdgpu" ];
 
+  hardware.enableRedistributableFirmware = true;
+
   hardware.graphics = {
     enable = true;
     enable32Bit = true;

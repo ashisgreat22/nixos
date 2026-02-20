@@ -34,6 +34,13 @@
   sops.secrets.wireguard_dns = {
     owner = "ashie";
   };
+  sops.secrets.wireguard6_dns = {
+    owner = "ashie";
+  };
+
+  sops.secrets.wireguard6_adresses = {
+    owner = "ashie";
+  };
 
   sops.secrets.open_webui_env = {
     owner = "ashie";
@@ -46,7 +53,7 @@
       WIREGUARD_ENDPOINT_IP=${config.sops.placeholder.wireguard_endpoint_ip}
       WIREGUARD_ENDPOINT_PORT=${config.sops.placeholder.wireguard_endpoint_port}
       WIREGUARD_PRIVATE_KEY=${config.sops.placeholder.wireguard_private_key}
-      WIREGUARD_ADDRESSES=${config.sops.placeholder.wireguard_addresses}
+      WIREGUARD_ADDRESSES=${config.sops.placeholder.wireguard_addresses},${config.sops.placeholder.wireguard6_adresses}
       WIREGUARD_PRESHARED_KEY=${config.sops.placeholder.wireguard_preshared_key}
       DNS_ADDRESS=${config.sops.placeholder.wireguard_dns}
       WIREGUARD_MTU=1320
@@ -96,13 +103,13 @@
   sops.secrets.prowlarr_api_key = { };
 
   # Authelia Secrets
-  #  sops.secrets.authelia_jwt_secret = {
-  #    owner = "authelia-main";
-  #  };
-  #  sops.secrets.authelia_session_secret = {
-  #    owner = "authelia-main";
-  #  };
-  #  sops.secrets.authelia_storage_encryption_key = {
-  #    owner = "authelia-main";
-  #  };
+  sops.secrets.authelia_jwt_secret = {
+    owner = "authelia-main";
+  };
+  sops.secrets.authelia_session_secret = {
+    owner = "authelia-main";
+  };
+  sops.secrets.authelia_storage_encryption_key = {
+    owner = "authelia-main";
+  };
 }

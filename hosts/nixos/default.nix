@@ -29,46 +29,36 @@
       zramAlgorithm = "zstd";
     };
 
-    # Hardened Malloc (Scudo)
     hardenedMalloc = {
       enable = false;
     };
 
-    # Secure Boot (Lanzaboote)
-    # 1. sudo sbctl create-keys
-    # 2. sudo sbctl enroll-keys -m
-    # 3. Enable this option
-    # 4. Reboot
     secureBoot = {
-      enable = false; # Disabled for initial install (enable after running sbctl create-keys)
+      enable = false; # switched to grub, needs update
       pkiBundle = "/var/lib/sbctl";
     };
 
-    # DNS-over-TLS with DNSSEC
     dnsOverTls = {
       enable = true;
       dnssec = true;
     };
 
-    # Cloudflare-only firewall rules
     cloudflareFirewall = {
       enable = true;
       allowLocalTraffic = true;
       enablePodmanWorkaround = true;
       publicPorts = [
+        # Ports that are public
         443
         80
       ];
-      restrictedPorts = [ ];
+      restrictedPorts = [ ]; # Ports that are Cloudflare only
     };
 
-    # Base Podman container runtime
-    # Disabled here because system/podman.nix handles Podman + container definitions
     podman.enable = true;
 
-    # VPN-isolated browser containers
     browserVpn = {
-      enable = true;
+      enable = false;
       browsers = [
         "firefox"
         "tor-browser"
@@ -78,17 +68,14 @@
       ];
     };
 
-    # Ollama System Service (Isolated)
     ollamaRocm = {
       enable = false; # Disabled temporarily to unblock install (namespace issues)
     };
 
-    # Open WebUI System Service (Isolated)
     openWebUI = {
-      enable = true;
+      enable = false;
     };
 
-    # SearXNG (Meta-Search Engine)
     searxng = {
       enable = true;
       port = 8888;

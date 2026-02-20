@@ -70,6 +70,33 @@ in
       pkgs.lxqt.lxqt-policykit
       pkgs.libnotify
       pkgs.swww
+      (pkgs.writeShellScriptBin "freeze-shot" ''
+        # Capture the screen to a temp file
+        file=$(mktemp --suffix=.png)
+        ${pkgs.grim}/bin/grim "$file"
+
+        # Open imv in fullscreen to simulate freeze
+        # We run it in the background
+        ${pkgs.imv}/bin/imv -f "$file" &
+        pid=$!
+
+        # Give imv a moment to open
+        sleep 0.2
+
+        # Run slurp to select region
+        geometry=$(${pkgs.slurp}/bin/slurp)
+
+        # Close the "frozen" overlay
+        kill "$pid"
+
+        # If we got a selection, crop and copy
+        if [ -n "$geometry" ]; then
+          ${pkgs.imagemagick}/bin/magick "$file" -crop "$geometry" - | ${pkgs.wl-clipboard}/bin/wl-copy
+        fi
+
+        # Cleanup
+        rm "$file"
+      '')
     ];
 
     xdg.portal = {
@@ -234,7 +261,7 @@ in
 
           Mod+Shift+E { spawn "bemoji" "-t"; }
 
-          Print { spawn "sh" "-c" "grim -g \"$(slurp)\" - | wl-copy"; }
+          Print { spawn "freeze-shot"; }
 
           // Browsers
           Mod+W { spawn "firefox"; }

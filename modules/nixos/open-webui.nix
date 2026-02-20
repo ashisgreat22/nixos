@@ -112,6 +112,7 @@ in
         ];
         ExecStart = ''
           ${pkgs.podman}/bin/podman run --rm --name open-webui \
+            --label "io.containers.autoupdate=registry" \
             --network=antigravity-net \
             --dns=8.8.8.8 \
             --userns=auto \

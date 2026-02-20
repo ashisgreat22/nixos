@@ -16,6 +16,8 @@
 
 let
   cfg = config.myModules.redlib;
+  mainUser = config.myModules.system.mainUser;
+  mainUserUid = toString config.users.users.${mainUser}.uid;
 in
 {
   options.myModules.redlib = {
@@ -34,6 +36,7 @@ in
     # Redlib Container
     virtualisation.oci-containers.containers."redlib" = {
       image = "quay.io/redlib/redlib:latest";
+      labels = { "io.containers.autoupdate" = "registry"; };
       # ports = [ "127.0.0.1:${toString cfg.port}:8080" ]; # Port exposed via VPN
       extraOptions = [
         "--pull=always"
@@ -44,19 +47,19 @@ in
     };
 
     # Rootless Overrides
-    systemd.services."podman-redlib".serviceConfig.User = lib.mkForce "ashie";
+    systemd.services."podman-redlib".serviceConfig.User = lib.mkForce mainUser;
     systemd.services."podman-redlib".environment = {
-      HOME = "/home/ashie";
-      XDG_RUNTIME_DIR = "/run/user/1000";
+      HOME = "/home/${mainUser}";
+      XDG_RUNTIME_DIR = "/run/user/${mainUserUid}";
     };
     systemd.services."podman-redlib".serviceConfig.Type = lib.mkForce "simple";
     systemd.services."podman-redlib".serviceConfig.Delegate = true;
     systemd.services."podman-redlib".after = [
-      "user-runtime-dir@1000.service"
+      "user-runtime-dir@${mainUserUid}.service"
       "podman-vpn.service"
     ];
     systemd.services."podman-redlib".requires = [
-      "user-runtime-dir@1000.service"
+      "user-runtime-dir@${mainUserUid}.service"
       "podman-vpn.service"
     ];
   };

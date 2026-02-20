@@ -1,6 +1,11 @@
 {
   description = "Modular NixOS Configuration with Hyprland";
 
+  nixConfig = {
+    extra-substituters = [ "https://attic.mildlyfunctional.gay/nixbsd" ];
+    extra-trusted-public-keys = [ "nixbsd:gwcQlsUONBLrrGCOdEboIAeFq9eLaDqfhfXmHZs1mgc=" ];
+  };
+
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
 
@@ -85,6 +90,23 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
+
+    nix-flatpak.url = "github:gmodena/nix-flatpak";
+
+    arkenfox = {
+      url = "github:dwarfmaster/arkenfox-nixos";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    firefox-addons = {
+      url = "gitlab:rycee/nur-expressions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixbsd = {
+      url = "github:nixos-bsd/nixbsd";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -97,6 +119,9 @@
       niri,
       cosmic-manager,
       nixflix,
+      arkenfox,
+      firefox-addons,
+      nixbsd,
       ...
     }@inputs:
     {
@@ -122,6 +147,24 @@
         default = import ./modules/home-manager;
       };
 
+      nixosConfigurations.nixbsd = nixbsd.lib.nixbsdSystem {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/nixbsd/configuration.nix
+        ];
+      };
+
+      nixosConfigurations.nixbsd-vm = nixbsd.lib.nixbsdSystem {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/nixbsd/configuration.nix
+          ({ config, ... }: {
+             # Enable VM variant
+             # This is already in configuration.nix but we can make it explicit here if we want.
+          })
+        ];
+      };
+
       nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
@@ -133,10 +176,14 @@
           home-manager.nixosModules.home-manager
           inputs.catppuccin.nixosModules.catppuccin
           inputs.nixvim.nixosModules.nixvim
+          inputs.nix-flatpak.nixosModules.nix-flatpak
           {
             home-manager = {
               extraSpecialArgs = { inherit inputs; };
-              sharedModules = [ inputs.cosmic-manager.homeManagerModules.cosmic-manager ];
+              sharedModules = [
+                inputs.cosmic-manager.homeManagerModules.cosmic-manager
+                inputs.arkenfox.homeManagerModules.arkenfox
+              ];
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "backup";
@@ -161,7 +208,10 @@
           {
             home-manager = {
               extraSpecialArgs = { inherit inputs; };
-              sharedModules = [ inputs.cosmic-manager.homeManagerModules.cosmic-manager ];
+              sharedModules = [
+                inputs.cosmic-manager.homeManagerModules.cosmic-manager
+                inputs.arkenfox.homeManagerModules.arkenfox
+              ];
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "backup";

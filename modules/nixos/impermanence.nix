@@ -57,6 +57,7 @@
         "Music"
         "Pictures"
         "Videos"
+        "src/aadniz-searxng"
         "Torrents"
         "nixos" # Config repo
         ".local/share/PrismLauncher" # Minecraft
@@ -71,7 +72,8 @@
         ".config/Antigravity" # Antigravity Config
         ".config/modprobed-db" # Local modconfig database
         ".config/VSCodium" # Codium Config
-        ".config/sops" # Sops Keys
+        ".config/sops" # Sops keys
+        ".config/easyeffects"
         ".config/gh" # Github CLI Auth
         ".local/share/keyrings" # Gnome Keyrings (Passwords)
         ".local/share/nvim" # NeoVim data (LazyVim, Mason, etc.)
@@ -91,6 +93,8 @@
         ".local/share/umu"
         ".cache/mesa_shader_cache"
         # ".local/share/Steam" # Symlinked to /games/Steam (Already Persistent)
+        ".paradoxlauncher"
+        ".local/share/Paradox Interactive"
         ".steam" # Steam Symlinks and logs
         ".config/steamtinkerlaunch" # Example of extra tools
         ".local/share/applications" # Desktop entries
@@ -99,6 +103,11 @@
         ".local/share/qBittorrent"
         ".local/share/jellyfin-desktop"
         ".cache/jellyfin-desktop"
+        ".local/share/zoxide"
+        ".local/share/fish"
+        "fabric-docs-mcp"
+      ];
+      files = [
       ];
     };
   };

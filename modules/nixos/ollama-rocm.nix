@@ -147,6 +147,7 @@ in
         ];
         ExecStart = ''
           ${pkgs.podman}/bin/podman run --rm --name ollama \
+            --label "io.containers.autoupdate=registry" \
             --network=antigravity-net \
             --network-alias=ollama \
             --dns=8.8.8.8 \

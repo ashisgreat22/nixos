@@ -61,6 +61,29 @@ in
         mShadow = mocha.crust;
       };
 
+      plugins = {
+        sources = [
+          {
+            enabled = true;
+            name = "Official Noctalia Plugins";
+            url = "https://github.com/noctalia-dev/noctalia-plugins";
+            branch = "main"; # Explicitly set branch just in case
+          }
+        ];
+        states = {
+          "assistant-panel" = {
+            enabled = true;
+            sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
+          };
+        };
+      };
+
+      pluginSettings = {
+        "assistant-panel" = {
+          service = "openai";
+        };
+      };
+
       settings = {
         colorSchemes = {
           darkMode = true;

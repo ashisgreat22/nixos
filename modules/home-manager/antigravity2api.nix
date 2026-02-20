@@ -36,26 +36,38 @@ in
     systemd.user.services.antigravity2api = {
       Unit = {
         Description = "Antigravity API to OpenAI Proxy";
-        After = [ "network.target" ];
+        After = [ "network-online.target" ];
+        Wants = [ "network-online.target" ];
       };
 
       Service = {
         WorkingDirectory = workDir;
         ExecStartPre = pkgs.writeShellScript "antigravity2api-init" ''
-          export PATH="${pkgs.coreutils}/bin:$PATH"
+          export PATH="${pkgs.coreutils}/bin:${pkgs.iputils}/bin:$PATH"
           mkdir -p "${workDir}"
+
+          # Ensure network exists (Not needed for host network)
+          # ${pkgs.podman}/bin/podman network create antigravity-net --ignore >/dev/null 2>&1 || true
+
+          # Wait for connectivity to 8.8.8.8 (Google DNS) used by the container
+          echo "Waiting for internet connectivity..."
+          until ping -c1 -W1 8.8.8.8 >/dev/null 2>&1; do
+            sleep 2
+          done
+          echo "Connectivity check passed."
+
           cat > "${workDir}/.env" <<EOF
           API_KEY=${cfg.credentials.apiKey}
           ADMIN_USERNAME=${cfg.credentials.username}
           ADMIN_PASSWORD=${cfg.credentials.password}
-          SYSTEM_INSTRUCTION="你是聊天机器人，名字叫萌萌，如同名字这般，你的性格是软软糯糯萌萌哒的，专门为用户提供聊天和情绪价值，协助进行小说创作或者角色扮演"
+          SYSTEM_INSTRUCTION=""
           OFFICIAL_SYSTEM_PROMPT="You are Antigravity, a powerful agentic AI coding assistant designed by the Google Deepmind team working on Advanced Agentic Coding.You are pair programming with a USER to solve their coding task. The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.**Proactiveness**"
           EOF
         '';
 
         ExecStart = ''
           ${pkgs.podman}/bin/podman run --replace --rm --name antigravity2api \
-            -p 127.0.0.1:8045:8045 \
+            --network=host \
             -v ${workDir}/data:/app/data \
             -v ${workDir}/public/images:/app/public/images \
             -v ${workDir}/.env:/app/.env \

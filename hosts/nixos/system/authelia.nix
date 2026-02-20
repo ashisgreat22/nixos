@@ -7,9 +7,8 @@
 
 {
   services.authelia.instances.main = {
-    enable = false;
+    enable = true;
 
-    # Secrets
     secrets = {
       jwtSecretFile = config.sops.secrets.authelia_jwt_secret.path;
       storageEncryptionKeyFile = config.sops.secrets.authelia_storage_encryption_key.path;
@@ -49,15 +48,19 @@
             domain = "auth.ashisgreat.xyz";
             policy = "bypass";
           }
+          # Bypass for Jellyfin (handles its own auth)
+          {
+            domain = "jellyfin.ashisgreat.xyz";
+            policy = "bypass";
+          }
           # Protected services (2FA required)
           {
             domain = [
               "sonarr.ashisgreat.xyz"
               "radarr.ashisgreat.xyz"
               "prowlarr.ashisgreat.xyz"
-              "jellyfin.ashisgreat.xyz" # Jellyfin can use its own auth, but wrapping it adds 2FA
               "torrent.ashisgreat.xyz"
-              "jellyseer.ashisgreat.xyz" # Note: Typo in services.nix maintained here, check if corrected in Caddy
+              "jellyseer.ashisgreat.xyz"
             ];
             policy = "two_factor";
           }

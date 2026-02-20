@@ -36,5 +36,10 @@
     ./tutanota-sandboxed.nix
     ./hardened-malloc.nix
     ./searxng.nix
+    ./media.nix
+    ./cosmic.nix
+    ./steam-gamemode.nix
+    ./redlib.nix
+    ./auto-update.nix
   ];
 }

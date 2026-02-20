@@ -69,6 +69,9 @@ in
       "vsyscall=none"
       "oops=panic"
       "module.sig_enforce=1"
+      "amd_iommu=on"
+      "mitigations=auto"
+      "lockdown=confidentiality"
     ];
 
     # Kernel sysctl hardening

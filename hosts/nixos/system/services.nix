@@ -4,8 +4,38 @@
   pkgs,
   ...
 }:
+
+let
+  # Authelia internal location snippet
+  autheliaLocation = {
+    proxyPass = "http://127.0.0.1:9099/api/verify";
+    extraConfig = ''
+      internal;
+      proxy_pass_request_body off;
+      proxy_set_header Content-Length "";
+      proxy_set_header X-Original-URI $request_uri;
+    '';
+  };
+
+  # Config to enable Authelia protection
+  autheliaProtect = ''
+    auth_request /authelia;
+    auth_request_set $target_url $scheme://$http_host$request_uri;
+    auth_request_set $user $upstream_http_remote_user;
+    auth_request_set $groups $upstream_http_remote_groups;
+    proxy_set_header Remote-User $user;
+    proxy_set_header Remote-Groups $groups;
+    error_page 401 =302 https://auth.ashisgreat.xyz/?rd=$target_url;
+  '';
+in
 {
-  services.flatpak.enable = false;
+  services.flatpak = {
+    enable = true;
+    packages = [
+      "com.github.wwmm.easyeffects"
+    ];
+    update.onActivation = true;
+  };
 
   services.snowflake-proxy = {
     enable = false;
@@ -169,6 +199,8 @@
     "sonarr.ashisgreat.xyz" = {
       useACMEHost = "ashisgreat.xyz";
       forceSSL = true;
+      extraConfig = autheliaProtect;
+      locations."/authelia" = autheliaLocation;
       locations."/" = {
         proxyPass = "http://127.0.0.1:8989";
         proxyWebsockets = true;
@@ -178,6 +210,8 @@
     "radarr.ashisgreat.xyz" = {
       useACMEHost = "ashisgreat.xyz";
       forceSSL = true;
+      extraConfig = autheliaProtect;
+      locations."/authelia" = autheliaLocation;
       locations."/" = {
         proxyPass = "http://127.0.0.1:7878";
         proxyWebsockets = true;
@@ -187,6 +221,8 @@
     "prowlarr.ashisgreat.xyz" = {
       useACMEHost = "ashisgreat.xyz";
       forceSSL = true;
+      extraConfig = autheliaProtect;
+      locations."/authelia" = autheliaLocation;
       locations."/" = {
         proxyPass = "http://127.0.0.1:9696";
         proxyWebsockets = true;
@@ -196,6 +232,8 @@
     "torrent.ashisgreat.xyz" = {
       useACMEHost = "ashisgreat.xyz";
       forceSSL = true;
+      extraConfig = autheliaProtect;
+      locations."/authelia" = autheliaLocation;
       locations."/" = {
         proxyPass = "http://127.0.0.1:8080";
         proxyWebsockets = true;
@@ -221,6 +259,8 @@
     "jellyseer.ashisgreat.xyz" = {
       useACMEHost = "ashisgreat.xyz";
       forceSSL = true;
+      extraConfig = autheliaProtect;
+      locations."/authelia" = autheliaLocation;
       locations."/" = {
         proxyPass = "http://127.0.0.1:5055";
         proxyWebsockets = true;
@@ -242,7 +282,9 @@
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-      '';
+      ''
+      + autheliaProtect;
+      locations."/authelia" = autheliaLocation;
       locations."/" = {
         proxyPass = "http://127.0.0.1:8082";
         proxyWebsockets = true;

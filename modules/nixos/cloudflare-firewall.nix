@@ -118,13 +118,16 @@ in
             # Allow all traffic from internal container interfaces (Podman/CNI)
             # This allows containers to reach the host (DNS, Gateway)
             iifname "podman*" accept
+
             iifname "cni*" accept
+            # Allow container subnet (fixes issues with non-podman* interface names)
+            ip saddr 10.89.0.0/16 accept
             
             # Allow RFC1918 Private Networks (LAN, Containers, Link-Local)
             ${lib.optionalString cfg.allowLocalTraffic ''
-            ip saddr 10.0.0.0/8 accept
-            ip saddr 172.16.0.0/12 accept
-            ip saddr 192.168.0.0/16 accept
+              ip saddr 10.0.0.0/8 accept
+              ip saddr 172.16.0.0/12 accept
+              ip saddr 192.168.0.0/16 accept
             ''}
             ip saddr 169.254.0.0/16 accept
             
@@ -137,7 +140,7 @@ in
             ${lib.optionalString (cfg.restrictedPorts != [ ]) ''
               ip saddr @cloudflare_ipv4 tcp dport { ${lib.concatStringsSep ", " (map toString cfg.restrictedPorts)} } accept
               ip6 saddr @cloudflare_ipv6 tcp dport { ${lib.concatStringsSep ", " (map toString cfg.restrictedPorts)} } accept
-              
+
               # Drop all other traffic to restricted ports
               tcp dport { ${lib.concatStringsSep ", " (map toString cfg.restrictedPorts)} } drop
             ''}
@@ -151,6 +154,9 @@ in
             oifname "podman*" accept
             iifname "cni*" accept
             oifname "cni*" accept
+            # Allow container subnet forwarding
+            ip saddr 10.89.0.0/16 accept
+            ip daddr 10.89.0.0/16 accept
             
             # Allow established/related forwarding
             ct state established,related accept

@@ -1,13 +1,14 @@
-{
-  config,
+{ config,
   lib,
   pkgs,
   inputs,
-  ...
+  ... 
 }:
 
-let
+let 
+  cfg = config.myModules.azaharSandboxed;
   bwrapperPkgs = pkgs.extend inputs.nix-bwrapper.overlays.default;
+  sandboxUtils = import ./sandbox-utils.nix { inherit pkgs lib; };
 
   pname = "azahar";
   version = "2123.4";
@@ -35,58 +36,68 @@ let
   };
 in
 {
-  nixpkgs.overlays = [
-    (final: prev: {
-      azahar-sandboxed = bwrapperPkgs.mkBwrapper {
-        app = {
-          package = azahar;
-          id = "org.azahar_emu.Azahar";
-          env = {
-            QT_QPA_PLATFORM = "wayland;xcb";
-            XDG_CURRENT_DESKTOP = "KDE";
+  options.myModules.azaharSandboxed = {
+    enable = lib.mkEnableOption "sandboxed Azahar with nix-bwrapper";
+
+    extraBindMounts = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "Extra paths to bind mount (read-write) into the sandbox";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    nixpkgs.overlays = [ 
+      (final: prev: {
+        azahar-sandboxed = bwrapperPkgs.mkBwrapper {
+          app = {
+            package = azahar;
+            id = "org.azahar_emu.Azahar";
+            env = {
+              QT_QPA_PLATFORM = "wayland;xcb";
+              XDG_CURRENT_DESKTOP = "KDE";
+            };
+          };
+
+          flatpak.enable = false;
+
+          fhsenv.bwrap.baseArgs = lib.mkForce (sandboxUtils.mkCommonBindArgs { inherit config lib; } ++ sandboxUtils.mkGamingBindArgs { });
+
+          fhsenv.bwrap.additionalArgs = sandboxUtils.mkGuiBindArgs { } ++ [
+            # D-Bus session proxy only
+            ''--bind "$XDG_RUNTIME_DIR/app/org.azahar_emu.Azahar/bus" "$XDG_RUNTIME_DIR/bus"''
+          ];
+
+          mounts = {
+            read = sandboxUtils.mkGuiMounts.read;
+            readWrite = [
+              "$HOME/Games/3DS"
+              "$HOME/.config/azahar"
+              "$HOME/.local/share/azahar"
+            ] ++ cfg.extraBindMounts;
+          };
+
+          dbus.enable = false;
+          script.preCmds.stage2 = sandboxUtils.mkDbusProxyScript {
+            appId = "org.azahar_emu.Azahar";
+            enableSystemBus = false;
+            proxyArgs = [
+              "--filter"
+              ''--talk="org.freedesktop.Flatpak"''
+              ''--talk="org.kde.StatusNotifierWatcher"''
+              ''--talk="org.kde.KWin"''
+              ''--talk="org.gnome.Mutter.DisplayConfig"''
+              ''--talk="org.freedesktop.ScreenSaver"''
+              ''--talk="org.freedesktop.portal.Desktop"''
+              ''--talk="org.freedesktop.portal.OpenURI"''
+              ''--talk="org.freedesktop.secrets"''
+              ''--call="org.freedesktop.portal.*=*@/org/freedesktop/portal/desktop"''
+            ];
           };
         };
+      })
+    ];
 
-        flatpak.enable = false;
-        fhsenv.bwrap.additionalArgs = [
-          "--dir /run/systemd/resolve"
-          "--ro-bind-try /run/systemd/resolve /run/systemd/resolve"
-          ''--bind "$XDG_RUNTIME_DIR/app/org.azahar_emu.Azahar/bus" "$XDG_RUNTIME_DIR/bus"''
-        ];
-
-        mounts = {
-          read = [
-            "$HOME/.config/kdedefaults"
-            "$HOME/.local/share/color-schemes"
-            "$HOME/.config/fontconfig"
-            "$HOME/.icons"
-            "$HOME/.config/MangoHud"
-          ];
-          readWrite = [
-            "$HOME/Games/3DS"
-            "$HOME/.config/azahar"
-            "$HOME/.local/share/azahar"
-          ];
-        };
-
-        dbus.enable = false;
-        script.preCmds.stage2 = (import ./sandbox-utils.nix { inherit pkgs lib; }).mkDbusProxyScript {
-          appId = "org.azahar_emu.Azahar";
-          enableSystemBus = false;
-          proxyArgs = [
-            "--filter"
-            ''--talk="org.freedesktop.Flatpak"''
-            ''--talk="org.kde.StatusNotifierWatcher"''
-            ''--talk="org.kde.KWin"''
-            ''--talk="org.gnome.Mutter.DisplayConfig"''
-            ''--talk="org.freedesktop.ScreenSaver"''
-            ''--talk="org.freedesktop.portal.Desktop"''
-            ''--talk="org.freedesktop.portal.OpenURI"''
-            ''--talk="org.freedesktop.secrets"''
-            ''--call="org.freedesktop.portal.*=*@/org/freedesktop/portal/desktop"''
-          ];
-        };
-      };
-    })
-  ];
+    environment.systemPackages = [ pkgs.azahar-sandboxed ];
+  };
 }

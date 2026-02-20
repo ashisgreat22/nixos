@@ -8,7 +8,9 @@
 }:
 
 let
+  cfg = config.myModules.vesktopSandboxed;
   bwrapperPkgs = pkgs.extend inputs.nix-bwrapper.overlays.default;
+  sandboxUtils = import ./sandbox-utils.nix { inherit pkgs lib; };
 
   # Define specific Vesktop version to avoid build errors from source
   vesktop-bin = pkgs.stdenv.mkDerivation rec {
@@ -40,106 +42,86 @@ let
   };
 in
 {
-  nixpkgs.overlays = [
-    (final: prev: {
-      vesktop-sandboxed = bwrapperPkgs.mkBwrapper {
-        app = {
-          package = vesktop-bin;
-          id = "dev.vencord.Vesktop";
-          env = {
-            # Propagate XDG_DATA_DIRS for theming
-            XDG_DATA_DIRS = "$XDG_DATA_DIRS";
-            # Force Wayland
-            NIXOS_OZONE_WL = "1";
+  options.myModules.vesktopSandboxed = {
+    enable = lib.mkEnableOption "sandboxed Vesktop with nix-bwrapper";
+
+    extraBindMounts = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "Extra paths to bind mount (read-write) into the sandbox";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    nixpkgs.overlays = [
+      (final: prev: {
+        vesktop-sandboxed = bwrapperPkgs.mkBwrapper {
+          app = {
+            package = vesktop-bin;
+            id = "dev.vencord.Vesktop";
+            env = {
+              # Propagate XDG_DATA_DIRS for theming
+              XDG_DATA_DIRS = "$XDG_DATA_DIRS";
+              # Force Wayland
+              NIXOS_OZONE_WL = "1";
+            };
           };
-        };
 
-        # Enable X11 and Wayland
-        sockets.x11 = true;
-        sockets.wayland = true;
+          # Enable X11 and Wayland
+          sockets.x11 = true;
+          sockets.wayland = true;
 
-        # Disable flatpak emulation
-        flatpak.enable = false;
+          # Disable flatpak emulation
+          flatpak.enable = false;
 
-        fhsenv.opts = {
-          unshareUser = true;
-          unshareUts = false;
-          unshareCgroup = false;
-          unsharePid = false;
-          unshareNet = false; # Need network for Discord
-          unshareIpc = false;
-        };
+          fhsenv.opts = {
+            unshareUser = true;
+            unshareUts = false;
+            unshareCgroup = false;
+            unsharePid = false;
+            unshareNet = false; # Need network for Discord
+            unshareIpc = false;
+          };
 
-        fhsenv.bwrap.baseArgs = lib.mkForce [
-          "--new-session"
-          "--proc /proc"
-          "--dev /dev"
-          "--dev-bind /dev/dri /dev/dri" # GPU acceleration
-          "--tmpfs /home"
-          "--tmpfs /tmp"
-          "--tmpfs /run"
-          "--dir /run/user"
-          "--dir /run/user/${toString config.users.users.ashie.uid}"
-          # System paths
-          "--ro-bind /sys /sys"
-          "--ro-bind-try /run/current-system /run/current-system"
-          "--ro-bind-try /run/opengl-driver /run/opengl-driver"
-          "--ro-bind-try /run/opengl-driver-32 /run/opengl-driver-32"
-          "--dir /run/systemd/resolve"
-          "--ro-bind-try /run/systemd/resolve /run/systemd/resolve"
-          # Audio
-          "--ro-bind-try /etc/asound.conf /etc/asound.conf"
-        ];
+          fhsenv.bwrap.baseArgs = lib.mkForce (sandboxUtils.mkCommonBindArgs { inherit config lib; } ++ sandboxUtils.mkGamingBindArgs { });
 
-        mounts = {
-          read = [
-            "$HOME/.config/fontconfig"
-            "$HOME/.local/share/fonts"
-            "$HOME/.icons"
-            "$HOME/.themes"
-            "$HOME/.local/share/themes"
-            "$HOME/.config/kdedefaults"
-            "$HOME/.local/share/color-schemes"
-          ];
-          readWrite = [
-            "$HOME/.config/vesktop"
-            "$HOME/Downloads"
-          ];
-        };
+          mounts = {
+            read = sandboxUtils.mkGuiMounts.read;
+            readWrite = [
+              "$HOME/.config/vesktop"
+              "$HOME/Downloads"
+            ] ++ cfg.extraBindMounts;
+          };
 
-        # Disable built-in DBus module (invokes bwrap without --unshare-user)
-        dbus.enable = false;
+          # Disable built-in DBus module (invokes bwrap without --unshare-user)
+          dbus.enable = false;
 
-        # Manually set up DBus proxy with --unshare-user (session bus only)
-        script.preCmds.stage2 = (import ./sandbox-utils.nix { inherit pkgs lib; }).mkDbusProxyScript {
-          appId = "dev.vencord.Vesktop";
-          enableSystemBus = false;
-          proxyArgs = [
-            "--filter"
-            ''--talk="org.freedesktop.portal.*"''
-            ''--call="org.freedesktop.portal.*=*@/org/freedesktop/portal/desktop"''
-            ''--talk="org.freedesktop.Notifications"''
-            ''--talk="org.freedesktop.ScreenSaver"''
-            ''--talk="org.kde.StatusNotifierWatcher"''
-            ''--talk="org.gnome.Mutter.DisplayConfig"''
-            ''--talk="com.canonical.AppMenu.Registrar"''
-            ''--own="dev.vencord.Vesktop"''
-            ''--own="dev.vencord.Vesktop.*"''
+          # Manually set up DBus proxy with --unshare-user (session bus only)
+          script.preCmds.stage2 = sandboxUtils.mkDbusProxyScript {
+            appId = "dev.vencord.Vesktop";
+            enableSystemBus = false;
+            proxyArgs = [
+              "--filter"
+              ''--talk="org.freedesktop.portal.*"''
+              ''--call="org.freedesktop.portal.*=*@/org/freedesktop/portal/desktop"''
+              ''--talk="org.freedesktop.Notifications"''
+              ''--talk="org.freedesktop.ScreenSaver"''
+              ''--talk="org.kde.StatusNotifierWatcher"''
+              ''--talk="org.gnome.Mutter.DisplayConfig"''
+              ''--talk="com.canonical.AppMenu.Registrar"''
+              ''--own="dev.vencord.Vesktop"''
+              ''--own="dev.vencord.Vesktop.*"''
+            ];
+          };
+
+          fhsenv.bwrap.additionalArgs = sandboxUtils.mkGuiBindArgs { } ++ [
+            # D-Bus session proxy only
+            ''--bind "$XDG_RUNTIME_DIR/app/dev.vencord.Vesktop/bus" "$XDG_RUNTIME_DIR/bus"''
           ];
         };
+      })
+    ];
 
-        fhsenv.bwrap.additionalArgs = [
-          # D-Bus session proxy only
-          ''--bind "$XDG_RUNTIME_DIR/app/dev.vencord.Vesktop/bus" "$XDG_RUNTIME_DIR/bus"''
-
-          # Wayland socket
-          ''--bind "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"''
-
-          # PipeWire + Pulse
-          ''--bind "$XDG_RUNTIME_DIR/pipewire-0" "$XDG_RUNTIME_DIR/pipewire-0"''
-          ''--bind "$XDG_RUNTIME_DIR/pulse" "$XDG_RUNTIME_DIR/pulse"''
-        ];
-      };
-    })
-  ];
+    environment.systemPackages = [ pkgs.vesktop-sandboxed ];
+  };
 }

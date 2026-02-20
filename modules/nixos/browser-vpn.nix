@@ -18,6 +18,7 @@
 
 let
   cfg = config.myModules.browserVpn;
+  mainUser = config.myModules.system.mainUser;
 
   # Helper function for auto-recovery from podman namespace corruption
   # Detects "cannot re-exec process" errors and runs migrate to fix
@@ -78,7 +79,8 @@ let
           echo "Build complete."
           ;;
         run)
-          if ! podman_with_recovery image exists ${imageName}:latest 2>/dev/null; then
+          if ! podman_with_recovery image exists ${imageName}:latest 2>/dev/null;
+            then
             echo "Building ${name} container image..."
             podman_with_recovery build -t ${imageName}:latest "$REPO_DIR/containers/${name}-wayland/"
           fi
@@ -168,8 +170,8 @@ let
           Fingerprinting = true;
         };
         Preferences = {
-          "network.dns.disableIPv6" = true;
-          "network.ipv6" = false;
+          "network.dns.disableIPv6" = false;
+          "network.ipv6" = true;
           "network.http.fast-fallback-to-IPv4" = true;
           "network.trr.mode" = 5; # Disable DNS over HTTPS (use system/VPN DNS)
           "ui.systemUsesDarkTheme" = 1;
@@ -231,7 +233,8 @@ let
         echo "Build complete."
         ;;
       run)
-        if ! podman_with_recovery image exists localhost/thorium-wayland:latest 2>/dev/null; then
+        if ! podman_with_recovery image exists localhost/thorium-wayland:latest 2>/dev/null;
+          then
           echo "Building thorium-dev container image..."
           podman_with_recovery build -t localhost/thorium-wayland:latest "$REPO_DIR/containers/thorium-wayland/"
         fi
@@ -315,7 +318,8 @@ let
         echo "Build complete."
         ;;
       run)
-        if ! podman_with_recovery image exists localhost/arch-kitty:latest 2>/dev/null; then
+        if ! podman_with_recovery image exists localhost/arch-kitty:latest 2>/dev/null;
+          then
           echo "Building Arch Kitty container image..."
           podman_with_recovery build -t localhost/arch-kitty:latest "$REPO_DIR/containers/arch-kitty/"
         fi
@@ -450,13 +454,13 @@ in
 
     kittyConfigDir = lib.mkOption {
       type = lib.types.str;
-      default = "/home/ashie/.config/kitty";
+      default = "/home/${mainUser}/.config/kitty";
       description = "Path to kitty configuration directory";
     };
 
     bashrcPath = lib.mkOption {
       type = lib.types.str;
-      default = "/home/ashie/.bashrc";
+      default = "/home/${mainUser}/.bashrc";
       description = "Path to bashrc file for Kitty container";
     };
   };

@@ -21,6 +21,11 @@
     ./home/steam.nix
     ./home/mangohud.nix
     ./home/starship.nix
+    ./home/opencode.nix
+    ./home/fish.nix
+    ./home/git.nix
+    ./home/xdg.nix
+    ./home/fonts.nix
   ];
 
   home.packages = [
@@ -29,41 +34,6 @@
     pkgs.joplin-desktop
     pkgs.bemoji
     pkgs.wtype
-    (pkgs.writeShellScriptBin "opencode" ''
-      export OPENAI_BASE_URL="https://api.ashisgreat.xyz/v1"
-      export OPENAI_API_KEY="$(cat ${config.sops.secrets.master_api_key.path})"
-      export OPENCODE_DISABLE_DEFAULT_PLUGINS=true
-
-      # Ensure config directory exists
-      mkdir -p $HOME/.config/opencode
-
-      # Force remove config.json if it is a symlink to ensure we can write to it
-      if [ -L $HOME/.config/opencode/config.json ]; then
-         rm -f $HOME/.config/opencode/config.json
-      fi
-
-      # Validate permissions and force write correct config
-      # We verify if we can write to it, if not (e.g. read-only file), we remove it
-      if [ -f $HOME/.config/opencode/config.json ] && [ ! -w $HOME/.config/opencode/config.json ]; then
-         rm -f $HOME/.config/opencode/config.json
-      fi
-
-      # Always overwrite config.json to ensure correct settings
-      cat > $HOME/.config/opencode/config.json <<EOF
-      {
-        "model": "openai/gpt-4o",
-        "disabled_providers": ["opencode-anthropic-auth", "anthropic", "github"],
-        "plugin": []
-      }
-      EOF
-
-      # Clear broken plugin from cache if it exists (one-time cleanup)
-      if [ -d "$HOME/.cache/opencode/node_modules/opencode-anthropic-auth" ]; then
-        rm -rf "$HOME/.cache/opencode"
-      fi
-
-      exec ${inputs.opencode-flake.packages.${pkgs.stdenv.hostPlatform.system}.default}/bin/opencode "$@"
-    '')
   ];
 
   sops.defaultSopsFile = ../../secrets/secrets.yaml;
@@ -93,62 +63,8 @@
     };
   };
 
-  programs.fish = {
-    enable = true;
-    interactiveShellInit = ''
-      set fish_greeting # Disable greeting
-      hyfetch
-    '';
-    plugins = [
-      {
-        name = "grc";
-        src = pkgs.fishPlugins.grc.src;
-      }
-      {
-        name = "done";
-        src = pkgs.fishPlugins.done.src;
-      }
-      {
-        name = "sponge";
-        src = pkgs.fishPlugins.sponge.src;
-      }
-      {
-        name = "puffer";
-        src = pkgs.fishPlugins.puffer.src;
-      }
-      {
-        name = "fzf-fish";
-        src = pkgs.fishPlugins.fzf-fish.src;
-      }
-      {
-        name = "pisces";
-        src = pkgs.fishPlugins.pisces.src;
-      }
-    ];
-    shellAliases = {
-      btw = "echo i use hyprland btw";
-      vi = "nvim";
-      vim = "nvim";
-      "67" = "nh os switch";
-    };
-  };
-
   programs.bash = {
     enable = true;
-  };
-
-  programs.git = {
-    enable = true;
-    settings.user.name = "ashisgreat22";
-    settings.user.email = "dev@ashisgreat.xyz";
-  };
-
-  programs.gh = {
-    enable = true;
-    settings = {
-      git_protocol = "ssh";
-      editor = "nvim";
-    };
   };
 
   programs.direnv = {
@@ -166,49 +82,65 @@
     };
   };
 
-  fonts.fontconfig = {
+  programs.firefox = {
     enable = true;
-
-    defaultFonts = {
-      serif = [ "ComicShannsMono Nerd Font" ];
-      sansSerif = [ "ComicShannsMono Nerd Font" ];
-      monospace = [ "ComicShannsMono Nerd Font Mono" ];
-      emoji = [ "Noto Color Emoji" ];
+    package = pkgs.firefox-esr; # Use standard package so HM can manage profiles/policies
+    arkenfox = {
+      enable = true;
+      version = "140.0"; # Match ESR version
     };
-  };
-
-  xdg.desktopEntries.youtube = {
-    name = "YouTube";
-    genericName = "Video Player";
-    exec = "brave --profile-directory=YouTube --app=https://youtube.com";
-    terminal = false;
-    categories = [
-      "Network"
-      "Video"
-      "AudioVideo"
-    ];
-    icon = "youtube";
-  };
-
-  xdg.mimeApps = {
-    enable = true;
-    defaultApplications = {
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" = [
-        "onlyoffice-desktopeditors.desktop"
+    profiles.ashie = {
+      id = 0;
+      extensions = with inputs.firefox-addons.legacyPackages.${pkgs.system}.firefox-addons; [
+        ublock-origin
+        bitwarden
+        sponsorblock
       ];
-      "application/msword" = [ "onlyoffice-desktopeditors.desktop" ];
-      "text/html" = [ "nix.bwrapper.firefox.desktop" ];
-      "x-scheme-handler/http" = [ "nix.bwrapper.firefox.desktop" ];
-      "x-scheme-handler/https" = [ "nix.bwrapper.firefox.desktop" ];
-      "x-scheme-handler/about" = [ "nix.bwrapper.firefox.desktop" ];
-      "x-scheme-handler/unknown" = [ "nix.bwrapper.firefox.desktop" ];
-      "application/xhtml+xml" = [ "nix.bwrapper.firefox.desktop" ];
-      "application/x-extension-htm" = [ "nix.bwrapper.firefox.desktop" ];
-      "application/x-extension-html" = [ "nix.bwrapper.firefox.desktop" ];
-      "application/x-extension-shtml" = [ "nix.bwrapper.firefox.desktop" ];
-      "application/x-extension-xhtml" = [ "nix.bwrapper.firefox.desktop" ];
-      "application/x-extension-xht" = [ "nix.bwrapper.firefox.desktop" ];
-      "application/pdf" = [ "nix.bwrapper.firefox.desktop" ];
+      search = {
+        default = "AshisGreat";
+        force = true;
+        engines = {
+          "AshisGreat" = {
+            urls = [{
+              template = "https://search.ashisgreat.xyz/search";
+              params = [
+                { name = "q"; value = "{searchTerms}"; }
+              ];
+            }];
+            iconUpdateURL = "https://search.ashisgreat.xyz/favicon.ico";
+            updateInterval = 24 * 60 * 60 * 1000; # every day
+            definedAliases = [ "@ag" ];
+          };
+        };
+      };
+      arkenfox = {
+        enable = true;
+        "0000".enable = true; # Top-level overrides
+        "0100".enable = true; # Startup
+        "0200".enable = true; # Geolocation
+        "0300".enable = true; # Browser Features
+        "0400".enable = true; # Safe Browsing
+        "0600".enable = true; # Block Implicit Outbound
+        "0700".enable = true; # DNS / DoH
+        "0800".enable = true; # Search Bar / Forms / History
+        "0900".enable = true; # Passwords
+        "1000".enable = true; # Disk Cache / Antifingerprinting
+        "1200".enable = true; # HTTPS
+        "1600".enable = true; # Referers
+        "1700".enable = true; # Containers
+        "2000".enable = true; # Plugins / Media
+        "2400".enable = true; # DOM
+        "2600".enable = true; # Storage
+        "2700".enable = true; # Enhanced Tracking Protection
+        "2800".enable = true; # Shutdown & Sanitizing
+        "4500".enable = true; # RFP (Resist Fingerprinting)
+        "5000".enable = true; # Optional OPSEC
+        "5500".enable = true; # Optional Hardening
+        "6000".enable = true; # DON'T TOUCH
+        "7000".enable = true; # DON'T TOUCH
+        "8000".enable = true; # DON'T TOUCH
+        "9000".enable = true; # DON'T TOUCH
+      };
     };
   };
 
