@@ -87,10 +87,10 @@ Applications are wrapped in `bubblewrap` namespaces using the `mkSandboxedApp` u
 ## 🛠️ Integrated Services
 
 - **SearXNG**: Privacy-focused search engine at `search.ashisgreat.xyz`.
-- **Antigravity2API**: High-performance LLM API proxy.
+- **Antigravity2API**: LLM API proxy.
 - **Ollama**: Local AI inference backend with ROCm support.
 - **Redlib**: Privacy-friendly Reddit front-end.
-- **OpenClaw**: Modern engine for Captain Claw.
+- **OpenClaw**: Modern AI Agent
 
 ---
 
