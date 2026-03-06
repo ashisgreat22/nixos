@@ -16,3 +16,11 @@ unified-router/
 unified_router-nodejs/
 .agent/
 old/
+openclaw/
+
+# Nix build outputs
+result
+result-*
+
+# AI assistant artifacts
+CLAUDE.md

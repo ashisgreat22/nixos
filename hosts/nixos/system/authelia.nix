@@ -48,6 +48,12 @@
             domain = "auth.ashisgreat.xyz";
             policy = "bypass";
           }
+          # Bypass for local network (service-to-service communication)
+          {
+            domain = "*.ashisgreat.xyz";
+            networks = [ "10.89.0.0/24" ];
+            policy = "bypass";
+          }
           # Bypass for Jellyfin (handles its own auth)
           {
             domain = "jellyfin.ashisgreat.xyz";
@@ -61,6 +67,7 @@
               "prowlarr.ashisgreat.xyz"
               "torrent.ashisgreat.xyz"
               "jellyseer.ashisgreat.xyz"
+              "openclaw.ashisgreat.xyz"
             ];
             policy = "two_factor";
           }

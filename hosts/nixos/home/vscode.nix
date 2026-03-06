@@ -51,6 +51,10 @@ let
     # Run antigravity binary when the FHS env is invoked
     runScript = pkgs.writeShellScript "antigravity-wrapper" ''
       unset LD_PRELOAD
+
+      # Use a wrapper for bash that ignores user configuration
+      export SHELL=${pkgs.writeShellScript "bash-sandboxed" ''exec ${pkgs.bash}/bin/bash --noprofile --norc "$@"''}
+
       exec ${pkgs.antigravity}/bin/antigravity "$@"
     '';
 
@@ -58,6 +62,11 @@ let
     profile = ''
       export LD_LIBRARY_PATH=/usr/lib:/usr/lib64:$LD_LIBRARY_PATH
     '';
+
+    extraBwrapArgs = [
+      "--tmpfs"
+      "/home/ashie/.config/fish"
+    ];
 
     extraBindMounts = [
       "/etc/subuid"
@@ -93,16 +102,18 @@ let
   # Helper to adapt VS Code extensions for Antigravity
   # Home Manager expects extensions to be in share/antigravity/extensions based on the package name,
   # but standard extensions are in share/vscode/extensions.
-  adaptToAntigravity = ext: pkgs.symlinkJoin {
-    name = "${ext.name}-antigravity";
-    paths = [ ext ];
-    # Ensure passthru attributes are preserved (though symlinkJoin usually handles this, specific ones might help)
-    inherit (ext) meta; 
-    postBuild = ''
-      mkdir -p $out/share/antigravity
-      ln -sf ${ext}/share/vscode/extensions $out/share/antigravity/extensions
-    '';
-  };
+  adaptToAntigravity =
+    ext:
+    pkgs.symlinkJoin {
+      name = "${ext.name}-antigravity";
+      paths = [ ext ];
+      # Ensure passthru attributes are preserved (though symlinkJoin usually handles this, specific ones might help)
+      inherit (ext) meta;
+      postBuild = ''
+        mkdir -p $out/share/antigravity
+        ln -sf ${ext}/share/vscode/extensions $out/share/antigravity/extensions
+      '';
+    };
 in
 {
   home.packages = [
@@ -132,49 +143,52 @@ in
       enableExtensionUpdateCheck = false;
 
       # Extensions from nixpkgs
-      extensions = map adaptToAntigravity (with pkgs.vscode-extensions; [
-        # Theme & Icons
-        catppuccin.catppuccin-vsc
-        catppuccin.catppuccin-vsc-icons
+      extensions = map adaptToAntigravity (
+        with pkgs.vscode-extensions;
+        [
+          # Theme & Icons
+          catppuccin.catppuccin-vsc
+          catppuccin.catppuccin-vsc-icons
 
-        # Git
-        eamodio.gitlens
+          # Git
+          eamodio.gitlens
 
-        # C/C++
-        llvm-vs-code-extensions.vscode-clangd
+          # C/C++
+          llvm-vs-code-extensions.vscode-clangd
 
-        # Nix
-        jnoortheen.nix-ide
+          # Nix
+          jnoortheen.nix-ide
 
-        # Python
-        ms-python.python
-        ms-python.debugpy
+          # Python
+          ms-python.python
+          ms-python.debugpy
 
-        # Go
-        golang.go
+          # Go
+          golang.go
 
-        # Java (RedHat + vscjava)
-        redhat.java
-        vscjava.vscode-java-debug
-        vscjava.vscode-java-dependency
-        vscjava.vscode-java-pack
-        vscjava.vscode-java-test
-        vscjava.vscode-gradle
-        vscjava.vscode-maven
+          # Java (RedHat + vscjava)
+          redhat.java
+          vscjava.vscode-java-debug
+          vscjava.vscode-java-dependency
+          vscjava.vscode-java-pack
+          vscjava.vscode-java-test
+          vscjava.vscode-gradle
+          vscjava.vscode-maven
 
-        # PHP
-        bmewburn.vscode-intelephense-client
-        xdebug.php-debug
+          # PHP
+          bmewburn.vscode-intelephense-client
+          xdebug.php-debug
 
-        # Ruby
-        shopify.ruby-lsp
+          # Ruby
+          shopify.ruby-lsp
 
-        # Docker & Containers
-        ms-azuretools.vscode-docker
+          # Docker & Containers
+          ms-azuretools.vscode-docker
 
-        # Formatters
-        esbenp.prettier-vscode
-      ]);
+          # Formatters
+          esbenp.prettier-vscode
+        ]
+      );
 
       # User settings (settings.json equivalent)
       userSettings = {

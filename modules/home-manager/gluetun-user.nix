@@ -46,7 +46,7 @@ in
 
     dnsAddress = lib.mkOption {
       type = lib.types.str;
-      default = "1.1.1.1";
+      default = "9.9.9.9";
       description = "DNS server address for VPN";
     };
 

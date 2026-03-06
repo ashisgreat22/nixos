@@ -96,11 +96,22 @@
       "jellyseer.ashisgreat.xyz"
       "jellyseerr.ashisgreat.xyz"
       "search.ashisgreat.xyz"
+      "openclaw.ashisgreat.xyz"
     ];
     interval = "10min";
     usev6 = "disabled";
     usev4 = "cmdv4";
-    extraConfig = "cmdv4='${pkgs.curl}/bin/curl -s https://api.ipify.org'";
+    extraConfig = ''
+      cmdv4='${pkgs.curl}/bin/curl -s https://api.ipify.org'
+
+      # Update IPv4 and IPv6 for root domain
+      usev6=cmdv6
+      cmdv6='${pkgs.curl}/bin/curl -s https://api64.ipify.org'
+      ashisgreat.xyz
+
+      # Revert to IPv4 only for subdomains appended below
+      usev6=disabled
+    '';
   };
 
   # Make ddclient use a static user for UID-based routing
@@ -125,6 +136,7 @@
   # Ensures the host can reach these domains even if VPN routing prevents public IP loopback
   networking.hosts = {
     "127.0.0.1" = [
+      "ashisgreat.xyz"
       "api.ashisgreat.xyz"
       "search.ashisgreat.xyz"
       "chat.ashisgreat.xyz"
@@ -138,6 +150,7 @@
       "jellyfin.ashisgreat.xyz"
       "jellyseer.ashisgreat.xyz"
       "jellyseerr.ashisgreat.xyz"
+      "openclaw.ashisgreat.xyz"
     ];
   };
 }

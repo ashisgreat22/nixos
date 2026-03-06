@@ -16,7 +16,26 @@ let
       policies = {
         Preferences = {
           "xpinstall.signatures.required" = false;
-        };
+          "network.manage-offline-status" = false;
+          "network.captive-portal-service.enabled" = false;
+          "widget.use-xdg-desktop-portal.file-picker" = 1;
+        }
+        // (
+          if cfg.useProxy then
+            {
+              # Always 127.0.0.1: the internal socat listener binds locally
+              # inside the sandbox regardless of where cfg.proxyAddress lives
+              # on the host. Pointing Firefox at cfg.proxyAddress would fail
+              # when it isn't 127.0.0.1 because that address doesn't exist
+              # inside the isolated network namespace.
+              "network.proxy.socks" = "127.0.0.1";
+              "network.proxy.socks_port" = cfg.proxyPort;
+              "network.proxy.type" = 1;
+              "network.proxy.socks_remote_dns" = true;
+            }
+          else
+            { }
+        );
       };
     }
   );
@@ -30,6 +49,24 @@ in
       default = [ ];
       description = "Extra paths to bind mount (read-write) into the sandbox";
     };
+
+    useProxy = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Whether to use the wireproxy SOCKS5 proxy";
+    };
+
+    proxyAddress = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1";
+      description = "The address of the SOCKS5 proxy";
+    };
+
+    proxyPort = lib.mkOption {
+      type = lib.types.int;
+      default = 1080;
+      description = "The port of the SOCKS5 proxy";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -37,7 +74,28 @@ in
       (final: prev: {
         firefox-sandboxed = bwrapperPkgs.mkBwrapper {
           app = {
-            package = prev.firefox-esr;
+            package =
+              if cfg.useProxy then
+                pkgs.symlinkJoin {
+                  name = "firefox-esr-proxy-wrapped";
+                  inherit (prev.firefox-esr) pname version meta;
+                  paths = [ prev.firefox-esr ];
+                  nativeBuildInputs = [ pkgs.makeWrapper ];
+                  postBuild =
+                    let
+                      firefoxExe = lib.getExe prev.firefox-esr;
+                      binName = builtins.baseNameOf firefoxExe;
+                    in
+                    ''
+                      rm -f $out/bin/${binName}
+                      makeWrapper ${firefoxExe} $out/bin/${binName} \
+                        --run '${pkgs.socat}/bin/socat TCP-LISTEN:${toString cfg.proxyPort},fork UNIX-CLIENT:/run/user/${
+                          toString config.users.users.${config.myModules.system.mainUser}.uid
+                        }/firefox-proxy.sock &'
+                    '';
+                }
+              else
+                prev.firefox-esr;
             # Omit app.id to avoid document portal bind that fails on FUSE
             env = {
               MOZ_ENABLE_WAYLAND = "1";
@@ -57,9 +115,9 @@ in
             unshareUser = true;
             unshareUts = false;
             unshareCgroup = false;
-            unsharePid = false;
-            unshareNet = false;
-            unshareIpc = false;
+            unsharePid = true;
+            unshareNet = cfg.useProxy;
+            unshareIpc = true;
           };
 
           fhsenv.bwrap.baseArgs = lib.mkForce (
@@ -74,6 +132,10 @@ in
               "--dir /etc/firefox"
               "--dir /etc/firefox/policies"
               "--ro-bind ${firefoxPolicies} /etc/firefox/policies/policies.json"
+              # Expose GPU device nodes so Firefox can use hardware acceleration
+              # (VA-API / VDPAU / WebGL). Without this it falls back to software
+              # rendering on pure-Wayland sessions.
+              "--dev-bind /dev/dri /dev/dri"
             ]
           );
 
@@ -117,17 +179,35 @@ in
             ];
           };
 
-          fhsenv.bwrap.additionalArgs = sandboxUtils.mkGuiBindArgs { } ++ [
-            ''--bind "$XDG_RUNTIME_DIR/app/nix.bwrapper.firefox/bus" "$XDG_RUNTIME_DIR/bus"''
-            ''--bind "$XDG_RUNTIME_DIR/app/nix.bwrapper.firefox/bus_system" /run/dbus/system_bus_socket''
-            "--bind-try /run/user/${
-              toString config.users.users.${config.myModules.system.mainUser}.uid
-            }/dconf /run/user/${toString config.users.users.${config.myModules.system.mainUser}.uid}/dconf"
-          ];
+          fhsenv.bwrap.additionalArgs =
+            sandboxUtils.mkGuiBindArgs { }
+            ++ [
+              ''--bind "$XDG_RUNTIME_DIR/app/nix.bwrapper.firefox/bus" "$XDG_RUNTIME_DIR/bus"''
+              ''--bind "$XDG_RUNTIME_DIR/app/nix.bwrapper.firefox/bus_system" /run/dbus/system_bus_socket''
+              "--bind-try /run/user/${
+                toString config.users.users.${config.myModules.system.mainUser}.uid
+              }/dconf /run/user/${toString config.users.users.${config.myModules.system.mainUser}.uid}/dconf"
+            ]
+            ++ lib.optionals cfg.useProxy [
+              "--bind-try /run/user/${
+                toString config.users.users.${config.myModules.system.mainUser}.uid
+              }/firefox-proxy.sock /run/user/${
+                toString config.users.users.${config.myModules.system.mainUser}.uid
+              }/firefox-proxy.sock"
+            ];
         };
       })
     ];
 
     environment.systemPackages = [ pkgs.firefox-sandboxed ];
+
+    systemd.user.services.firefox-proxy-bridge = lib.mkIf cfg.useProxy {
+      description = "Bridge SOCKS5 proxy to UNIX socket for Firefox Sandbox";
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.socat}/bin/socat UNIX-LISTEN:%t/firefox-proxy.sock,fork TCP:${cfg.proxyAddress}:${toString cfg.proxyPort}";
+        Restart = "always";
+      };
+    };
   };
 }

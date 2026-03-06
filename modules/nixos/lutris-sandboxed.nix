@@ -29,6 +29,8 @@ in
       (final: prev: {
         lutris-sandboxed = bwrapperPkgs.mkBwrapper {
           app = {
+            id = "net.lutris.Lutris";
+            renameDesktopFile = false;
             package = prev.lutris.override {
               extraPkgs = pkgs: [
                 pkgs.curl
@@ -38,6 +40,9 @@ in
                 pkgs.zstd
                 pkgs.xz
                 pkgs.p7zip
+                pkgs.libadwaita
+                pkgs.zenity
+                pkgs.gamescope
                 pkgs.which
                 pkgs.file
                 pkgs.zenity
@@ -53,7 +58,6 @@ in
               ];
             };
             isFhsenv = true;
-            id = "net.lutris.Lutris";
             env = {
               WEBKIT_DISABLE_DMABUF_RENDERER = 1;
               APPIMAGE_EXTRACT_AND_RUN = 1;

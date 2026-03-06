@@ -9,7 +9,7 @@
     ../../modules/home-manager/gluetun-user.nix
     ../../modules/home-manager/cosmic.nix
     inputs.sops-nix.homeManagerModules.sops
-    inputs.steam-config-nix.homeModules.default
+    # inputs.steam-config-nix.homeModules.default
     inputs.catppuccin.homeManagerModules.catppuccin
     inputs.nixvim.homeManagerModules.nixvim
     # inputs.unified-router-mcp.homeManagerModules.default
@@ -41,6 +41,9 @@
   sops.age.keyFile = "/home/ashie/.config/sops/age/keys.txt";
 
   sops.secrets.master_api_key = { };
+  sops.secrets.discord_bot_token = { };
+  sops.secrets.searxng_brave_api_key = { };
+  sops.secrets.github_token = { };
 
   # Unified Router MCP Servers
   # services.unified-router-mcp = {
@@ -60,6 +63,7 @@
       username = "ashie";
       password = "AshieAntigravity2024!";
       apiKey = "sk-antigravity-local-key";
+      glmApiKeyPath = "/run/secrets/glm_api_key";
     };
   };
 
@@ -110,6 +114,17 @@
             iconUpdateURL = "https://search.ashisgreat.xyz/favicon.ico";
             updateInterval = 24 * 60 * 60 * 1000; # every day
             definedAliases = [ "@ag" ];
+          };
+          "Brave Search" = {
+            urls = [{
+              template = "https://search.brave.com/search";
+              params = [
+                { name = "q"; value = "{searchTerms}"; }
+              ];
+            }];
+            iconUpdateURL = "https://search.brave.com/favicon.ico";
+            updateInterval = 24 * 60 * 60 * 1000; # every day
+            definedAliases = [ "@b" ];
           };
         };
       };

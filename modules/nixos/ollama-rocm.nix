@@ -164,7 +164,7 @@ in
               lib.optionalString (cfg.numThreads != null) "-e OLLAMA_NUM_THREADS=${toString cfg.numThreads}"
             } \
             -v ${cfg.dataDir}:/root/.ollama:U \
-            -p 127.0.0.1:${toString cfg.port}:11434 \
+            -p ${toString cfg.port}:11434 \
             ${cfg.image}
         '';
         ExecStop = "${pkgs.podman}/bin/podman stop ollama";

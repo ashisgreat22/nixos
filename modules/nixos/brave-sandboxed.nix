@@ -38,8 +38,26 @@ in
 
     extraBindMounts = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [];
+      default = [ ];
       description = "Extra paths to bind mount (read-write) into the sandbox";
+    };
+
+    useProxy = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Whether to use the wireproxy SOCKS5 proxy";
+    };
+
+    proxyAddress = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1";
+      description = "The address of the SOCKS5 proxy";
+    };
+
+    proxyPort = lib.mkOption {
+      type = lib.types.int;
+      default = 1080;
+      description = "The port of the SOCKS5 proxy";
     };
   };
 
@@ -48,14 +66,39 @@ in
       (final: prev: {
         brave-sandboxed = bwrapperPkgs.mkBwrapper {
           app = {
-            package = pkgs.symlinkJoin {
-              name = "brave-single-desktop";
-              paths = [ prev.brave ];
-              inherit (prev.brave) pname version meta;
-              postBuild = ''
-                rm $out/share/applications/com.brave.Browser.desktop
-              '';
-            };
+            package =
+              let
+                braveExe = lib.getExe prev.brave;
+                binName = builtins.baseNameOf braveExe;
+              in
+              pkgs.symlinkJoin {
+                name = "brave-wrapped";
+                inherit (prev.brave) pname version meta;
+                paths = [ prev.brave ];
+                nativeBuildInputs = [ pkgs.makeWrapper ];
+                postBuild = ''
+                  ${lib.optionalString cfg.useProxy ''
+                    rm -f $out/bin/${binName}
+                    makeWrapper ${braveExe} $out/bin/${binName} \
+                      --add-flags "--proxy-server=socks5://127.0.0.1:${toString cfg.proxyPort}" \
+                      --run '
+                        (
+                          SOCKET="/run/user/${toString config.users.users.${config.myModules.system.mainUser}.uid}/brave-proxy.sock"
+                          for i in $(seq 1 50); do
+                            if [ -S "$SOCKET" ]; then
+                              ${pkgs.socat}/bin/socat TCP-LISTEN:${toString cfg.proxyPort},fork UNIX-CLIENT:"$SOCKET"
+                              exit 0
+                            fi
+                            sleep 0.1
+                          done
+                          echo "Error: Brave proxy socket not found at $SOCKET" >&2
+                          exit 1
+                        ) &
+                      '
+                  ''}
+                  rm -f $out/share/applications/com.brave.Browser.desktop
+                '';
+              };
             # id = "brave-browser"; # Omit app.id to avoid potential bind errors (like Firefox)
             env = {
               # Propagate XDG_DATA_DIRS so GTK can find themes in user profile/system
@@ -75,35 +118,31 @@ in
             unshareUser = true;
             unshareUts = false;
             unshareCgroup = false;
-            unsharePid = false;
-            unshareNet = false;
-            unshareIpc = false;
+            unsharePid = true;
+            unshareNet = cfg.useProxy;
+            unshareIpc = true;
           };
 
-          fhsenv.bwrap.baseArgs = lib.mkForce [
-            "--new-session"
-            "--proc /proc"
-            "--dev /dev"
-            "--dev-bind /dev/dri /dev/dri"
-            "--tmpfs /home"
-            "--tmpfs /mnt"
-            "--tmpfs /run"
-            "--ro-bind-try /run/current-system /run/current-system"
-            "--ro-bind-try /run/booted-system /run/booted-system"
-            "--ro-bind-try /run/opengl-driver /run/opengl-driver"
-            "--ro-bind-try /run/opengl-driver-32 /run/opengl-driver-32"
-            # Brave flags
-            "--setenv NIXOS_OZONE_WL \"1\""
-            "--setenv NOTIFY_IGNORE_PORTAL 1"
-            # Bind policies for Theme
-            "--dir /etc/brave/policies/managed"
-            "--ro-bind ${bravePolicies} /etc/brave/policies/managed/policies.json"
-            # Fallback paths for Chromium/Chrome base
-            "--dir /etc/chromium/policies/managed"
-            "--ro-bind ${bravePolicies} /etc/chromium/policies/managed/policies.json"
-            "--dir /etc/opt/chrome/policies/managed"
-            "--ro-bind ${bravePolicies} /etc/opt/chrome/policies/managed/policies.json"
-          ];
+          fhsenv.bwrap.baseArgs = lib.mkForce (
+            sandboxUtils.mkCommonBindArgs { inherit config lib; }
+            ++ sandboxUtils.mkGamingBindArgs { }
+            ++ [
+              "--tmpfs /mnt"
+              "--ro-bind-try /run/booted-system /run/booted-system"
+              "--setenv NIXOS_OZONE_WL \"1\""
+              "--setenv NOTIFY_IGNORE_PORTAL 1"
+              # Bind policies for Theme
+              "--dir /etc/brave/policies/managed"
+              "--ro-bind ${bravePolicies} /etc/brave/policies/managed/policies.json"
+              # Fallback paths for Chromium/Chrome base
+              "--dir /etc/chromium/policies/managed"
+              "--ro-bind ${bravePolicies} /etc/chromium/policies/managed/policies.json"
+              "--dir /etc/opt/chrome/policies/managed"
+              "--ro-bind ${bravePolicies} /etc/opt/chrome/policies/managed/policies.json"
+              # Expose GPU device nodes
+              "--dev-bind /dev/dri /dev/dri"
+            ]
+          );
 
           # Filesystem: Limited to Brave directories and Downloads
           mounts = {
@@ -152,31 +191,35 @@ in
             ];
           };
 
-          fhsenv.bwrap.additionalArgs = [
-            ''--bind "$XDG_RUNTIME_DIR/app/nix.bwrapper.brave/bus" "$XDG_RUNTIME_DIR/bus"''
-            ''--bind "$XDG_RUNTIME_DIR/app/nix.bwrapper.brave/bus_system" /run/dbus/system_bus_socket''
-            "--dir /run/systemd/resolve"
-            "--ro-bind-try /run/systemd/resolve /run/systemd/resolve"
-            "--bind-try /run/user/${toString config.users.users.${config.myModules.system.mainUser}.uid}/dconf /run/user/${toString config.users.users.${config.myModules.system.mainUser}.uid}/dconf"
-          ];
+          fhsenv.bwrap.additionalArgs =
+            sandboxUtils.mkGuiBindArgs { }
+            ++ [
+              ''--bind "$XDG_RUNTIME_DIR/app/nix.bwrapper.brave/bus" "$XDG_RUNTIME_DIR/bus"''
+              ''--bind "$XDG_RUNTIME_DIR/app/nix.bwrapper.brave/bus_system" /run/dbus/system_bus_socket''
+              "--bind-try /run/user/${
+                toString config.users.users.${config.myModules.system.mainUser}.uid
+              }/dconf /run/user/${toString config.users.users.${config.myModules.system.mainUser}.uid}/dconf"
+            ]
+            ++ lib.optionals cfg.useProxy [
+              "--bind-try /run/user/${
+                toString config.users.users.${config.myModules.system.mainUser}.uid
+              }/brave-proxy.sock /run/user/${
+                toString config.users.users.${config.myModules.system.mainUser}.uid
+              }/brave-proxy.sock"
+            ];
         };
       })
     ];
 
-    environment.systemPackages = [
-      (pkgs.writeShellScriptBin "brave" ''
-        exec ${config.myModules.system.repoPath}/scripts/launch-vpn-app.sh ${pkgs.brave-sandboxed}/bin/brave "$@"
-      '')
-      (pkgs.makeDesktopItem {
-        name = "brave-vpn";
-        desktopName = "Brave Web Browser";
-        exec = "brave %U";
-        icon = "brave-browser";
-        categories = [
-          "Network"
-          "WebBrowser"
-        ];
-      })
-    ];
+    environment.systemPackages = [ pkgs.brave-sandboxed ];
+
+    systemd.user.services.brave-proxy-bridge = lib.mkIf cfg.useProxy {
+      description = "Bridge SOCKS5 proxy to UNIX socket for Brave Sandbox";
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.socat}/bin/socat UNIX-LISTEN:%t/brave-proxy.sock,fork TCP:${cfg.proxyAddress}:${toString cfg.proxyPort}";
+        Restart = "always";
+      };
+    };
   };
 }

@@ -64,39 +64,13 @@ in
       inputs.niri.packages.${pkgs.system}.niri
       inputs.niri.packages.${pkgs.system}.niri
       pkgs.xwayland-satellite
-      pkgs.grim
-      pkgs.slurp
       pkgs.wl-clipboard
       pkgs.lxqt.lxqt-policykit
       pkgs.libnotify
       pkgs.swww
-      (pkgs.writeShellScriptBin "freeze-shot" ''
-        # Capture the screen to a temp file
-        file=$(mktemp --suffix=.png)
-        ${pkgs.grim}/bin/grim "$file"
-
-        # Open imv in fullscreen to simulate freeze
-        # We run it in the background
-        ${pkgs.imv}/bin/imv -f "$file" &
-        pid=$!
-
-        # Give imv a moment to open
-        sleep 0.2
-
-        # Run slurp to select region
-        geometry=$(${pkgs.slurp}/bin/slurp)
-
-        # Close the "frozen" overlay
-        kill "$pid"
-
-        # If we got a selection, crop and copy
-        if [ -n "$geometry" ]; then
-          ${pkgs.imagemagick}/bin/magick "$file" -crop "$geometry" - | ${pkgs.wl-clipboard}/bin/wl-copy
-        fi
-
-        # Cleanup
-        rm "$file"
-      '')
+      pkgs.grim
+      pkgs.slurp
+      pkgs.satty
     ];
 
     xdg.portal = {
@@ -204,6 +178,8 @@ in
       }/bin/noctalia-shell >> /tmp/noctalia.log 2>&1"
 
       binds {
+          Print { spawn "sh" "-c" "grim - | wl-copy"; }
+          Mod+Shift+S { spawn "sh" "-c" "grim - | satty --filename - --fullscreen --initial-tool crop --output-filename ~/Pictures/satty-$(date '+%Y%m%d-%H%M%S').png --early-exit"; }
           Mod+Return { spawn "${cfg.terminal}"; }
           Mod+D { spawn "sh" "-c" "${cfg.launcher}"; }
           Mod+Q { close-window; }
@@ -260,9 +236,6 @@ in
           Mod+Equal { set-column-width "+10%"; }
 
           Mod+Shift+E { spawn "bemoji" "-t"; }
-
-          Print { spawn "freeze-shot"; }
-
           // Browsers
           Mod+W { spawn "firefox"; }
           Mod+Alt+W { spawn "tor-browser-vpn-podman"; }

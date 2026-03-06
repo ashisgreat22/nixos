@@ -33,18 +33,29 @@
 
   # Enable performance optimizations
   myModules.performance.enable = true;
-
+  services.resolved.dnssec = "false";
   # Enable modularized components
   myModules.desktop.cosmic.enable = true;
   myModules.media.enable = true;
   myModules.gaming.gamemode.enable = true;
   myModules.redlib.enable = true;
+  services.openclaw-service.enable = true;
 
   # Enable sandboxed applications
+  myModules.wireproxy = {
+    enable = true;
+    endpointIP = "94.228.209.212";
+  };
   myModules.steamSandboxed.enable = true;
   myModules.lutrisSandboxed.enable = true;
-  myModules.firefoxSandboxed.enable = true;
-  myModules.braveSandboxed.enable = true;
+  myModules.firefoxSandboxed = {
+    enable = true;
+    useProxy = true;
+  };
+  myModules.braveSandboxed = {
+    enable = true;
+    useProxy = true;
+  };
   myModules.azaharSandboxed.enable = true;
   myModules.faugusSandboxed.enable = true;
   myModules.citronSandboxed.enable = true;

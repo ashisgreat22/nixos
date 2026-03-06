@@ -51,6 +51,9 @@
     ];
   };
 
+
+  users.groups.media = { };
+
   # Disable root password login
   users.users.root = {
     hashedPassword = "!";

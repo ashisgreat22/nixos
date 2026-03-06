@@ -107,6 +107,9 @@ in
 
             # Allow established and related connections
             ct state established,related accept
+            
+            # Allow UDP for VPN handshakes (common ports)
+            udp dport { 51820, 1637, 1320 } accept
 
             # Allow ICMP (Ping)
             ip protocol icmp accept
@@ -160,6 +163,10 @@ in
             
             # Allow established/related forwarding
             ct state established,related accept
+          }
+
+          chain output {
+            type filter hook output priority 0; policy accept;
           }
         '';
       };

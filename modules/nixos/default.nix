@@ -19,6 +19,7 @@
     ./nginx.nix
     ./podman.nix
     ./browser-vpn.nix
+    ./wireproxy.nix
     ./ollama-rocm.nix
     ./open-webui.nix
     ./lutris-sandboxed.nix
@@ -40,6 +41,8 @@
     ./cosmic.nix
     ./steam-gamemode.nix
     ./redlib.nix
+    ./impermanence.nix
     ./auto-update.nix
+    ./openclaw.nix
   ];
 }

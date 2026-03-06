@@ -40,7 +40,7 @@
 
     dnsOverTls = {
       enable = true;
-      dnssec = true;
+      dnssec = false;
     };
 
     cloudflareFirewall = {
@@ -51,6 +51,7 @@
         # Ports that are public
         443
         80
+        1080
       ];
       restrictedPorts = [ ]; # Ports that are Cloudflare only
     };
@@ -69,7 +70,7 @@
     };
 
     ollamaRocm = {
-      enable = false; # Disabled temporarily to unblock install (namespace issues)
+      enable = true;
     };
 
     openWebUI = {

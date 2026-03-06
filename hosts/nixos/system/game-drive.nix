@@ -21,7 +21,7 @@
     device = "/games";
     fsType = "none";
     options = [
-      "bind"
+      "rbind"
       "x-systemd.after=games.mount"
     ];
   };

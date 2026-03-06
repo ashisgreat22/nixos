@@ -18,6 +18,17 @@ let
     PGID = pgid;
     TZ = "Europe/Berlin";
   };
+
+  # Host aliases so containers can communicate using public domain names locally (routes traffic to Nginx)
+  localAddHosts = [
+    "--add-host=sonarr.ashisgreat.xyz:10.89.0.1"
+    "--add-host=radarr.ashisgreat.xyz:10.89.0.1"
+    "--add-host=prowlarr.ashisgreat.xyz:10.89.0.1"
+    "--add-host=torrent.ashisgreat.xyz:10.89.0.1"
+    "--add-host=jellyfin.ashisgreat.xyz:10.89.0.1"
+    "--add-host=jellyseer.ashisgreat.xyz:10.89.0.1"
+    "--add-host=auth.ashisgreat.xyz:10.89.0.1"
+  ];
 in
 {
   options.myModules.media = {
@@ -34,8 +45,8 @@ in
 
       # --- VPN Gateway ---
       vpn = {
-        image = "docker.io/qmcgaw/gluetun";
-        labels = { "io.containers.autoupdate" = "registry"; };
+        image = "docker.io/qmcgaw/gluetun:v3.41.1"; # Pinned: v3.42+ breaks on kernels without nfnetlink_conntrack (conntrack flush via netlink fails)
+        # No auto-update label — pinned to specific version intentionally
         # The VPN manages the ports for the attached containers
         ports = [
           "127.0.0.1:8080:8080" # qBittorrent WebUI (Localhost only)
@@ -58,16 +69,16 @@ in
           "--network=media" # It joins the bridge so others can talk to it
           "--ip=10.89.0.5" # Static IP for VPN/Flaresolverr
           "--network-alias=flaresolverr" # Allow other containers to reach Flaresolverr via VPN
-          "--add-host=sonarr:10.89.0.50" # Allow Prowlarr to reach Sonarr
-          "--add-host=radarr:10.89.0.51" # Allow Prowlarr to reach Radarr
-          "--add-host=prowlarr:127.0.0.1" # Prowlarr matches VPN IP for self-reference if needed
-        ];
+        ]
+        ++ localAddHosts;
       };
 
       # --- Torrent Client (Routed via VPN) ---
       torrent = {
         image = "lscr.io/linuxserver/qbittorrent:latest";
-        labels = { "io.containers.autoupdate" = "registry"; };
+        labels = {
+          "io.containers.autoupdate" = "registry";
+        };
         # VITAL: Reuse the VPN container's network stack
         extraOptions = [ "--network=container:vpn" ];
         dependsOn = [ "vpn" ];
@@ -83,7 +94,9 @@ in
       # --- The Arr Stack ---
       prowlarr = {
         image = "lscr.io/linuxserver/prowlarr:latest";
-        labels = { "io.containers.autoupdate" = "registry"; };
+        labels = {
+          "io.containers.autoupdate" = "registry";
+        };
         extraOptions = [
           "--network=container:vpn"
         ];
@@ -94,14 +107,15 @@ in
 
       sonarr = {
         image = "lscr.io/linuxserver/sonarr:latest";
-        labels = { "io.containers.autoupdate" = "registry"; };
+        labels = {
+          "io.containers.autoupdate" = "registry";
+        };
         extraOptions = [
           "--network=media"
           "--ip=10.89.0.50"
           "--dns=8.8.8.8"
-          "--add-host=qbittorrent:10.89.0.5"
-          "--add-host=prowlarr:10.89.0.5"
-        ];
+        ]
+        ++ localAddHosts;
         ports = [ "127.0.0.1:8989:8989" ];
         environment = commonEnv;
         volumes = [
@@ -112,14 +126,15 @@ in
 
       radarr = {
         image = "lscr.io/linuxserver/radarr:latest";
-        labels = { "io.containers.autoupdate" = "registry"; };
+        labels = {
+          "io.containers.autoupdate" = "registry";
+        };
         extraOptions = [
           "--network=media"
           "--ip=10.89.0.51"
           "--dns=8.8.8.8"
-          "--add-host=qbittorrent:10.89.0.5"
-          "--add-host=prowlarr:10.89.0.5"
-        ];
+        ]
+        ++ localAddHosts;
         ports = [ "127.0.0.1:7878:7878" ];
         environment = commonEnv;
         volumes = [
@@ -131,13 +146,16 @@ in
       # --- Media Server ---
       jellyfin = {
         image = "lscr.io/linuxserver/jellyfin:latest";
-        labels = { "io.containers.autoupdate" = "registry"; };
+        labels = {
+          "io.containers.autoupdate" = "registry";
+        };
         extraOptions = [
           "--network=media"
           "--device=/dev/dri:/dev/dri"
           "--dns=8.8.8.8"
           "--ip=10.89.0.4"
-        ];
+        ]
+        ++ localAddHosts;
         ports = [ "127.0.0.1:8096:8096" ];
         environment = commonEnv;
         volumes = [
@@ -148,16 +166,16 @@ in
 
       jellyseerr = {
         image = "ghcr.io/seerr-team/seerr:latest"; # Migrated from jellyseerr (stale) to seerr (v3+)
-        labels = { "io.containers.autoupdate" = "registry"; };
+        labels = {
+          "io.containers.autoupdate" = "registry";
+        };
         extraOptions = [
           "--init" # Required for Seerr
           "--network=media"
           "--dns=8.8.8.8"
           "--ip=10.89.0.3"
-          "--add-host=sonarr:10.89.0.50"
-          "--add-host=radarr:10.89.0.51"
-          "--add-host=jellyfin:10.89.0.4"
-        ];
+        ]
+        ++ localAddHosts;
         ports = [ "127.0.0.1:5055:5055" ];
         environment = commonEnv;
         volumes = [ "/var/lib/nixarr/jellyseerr:/app/config" ];
@@ -165,7 +183,9 @@ in
 
       flaresolverr = {
         image = "ghcr.io/flaresolverr/flaresolverr:latest";
-        labels = { "io.containers.autoupdate" = "registry"; };
+        labels = {
+          "io.containers.autoupdate" = "registry";
+        };
         extraOptions = [ "--network=container:vpn" ];
         dependsOn = [ "vpn" ];
         environment = {

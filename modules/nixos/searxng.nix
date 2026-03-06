@@ -135,6 +135,8 @@ in
         "--cap-add=SETGID"
         "--cap-add=SETUID"
         "--cap-add=DAC_OVERRIDE"
+        "--dns=9.9.9.9"
+        "--dns=1.1.1.1"
       ];
       volumes = [
         "${config.sops.templates."searxng_settings.yml".path}:/etc/searxng/settings.yml:ro"
@@ -190,6 +192,12 @@ in
               lib.mapAttrsToList (name: url: "${name}: \"${url}\"") cfg.donations
             )}
 
+        outgoing:
+          request_timeout: 10.0
+          connect_timeout: 6.0
+          max_retry_count: 3
+          enable_ipv6: false
+
         engines:
           - name: braveapi
             engine: braveapi
@@ -197,7 +205,7 @@ in
             categories: general
             # api_key: set via BRAVE_API_KEY env var
             tokens: ["${config.sops.placeholder.searxng_private_token}"]
-            timeout: 2.0
+            timeout: 5.0
             weight: 2
             disabled: false
 

@@ -6,6 +6,7 @@
 }:
 {
   nixpkgs.overlays = [
+    inputs.nix-openclaw.overlays.default
     (final: prev: {
       antigravity = prev.antigravity.overrideAttrs (oldAttrs: rec {
         version = "1.18.3";
@@ -46,7 +47,7 @@
     "nix-command"
     "flakes"
   ];
-  nix.settings.allowed-users = [ "ashie" ];
+  nix.settings.allowed-users = [ "ashie" "kafka" ];
   nix.settings.sandbox = true;
 
   # Automatic Garbage Collection

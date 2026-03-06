@@ -44,6 +44,7 @@
       "/var/lib/nixarr"
       "/var/lib/nixflix"
       "/var/lib/authelia-main"
+      "/var/lib/openclaw"
     ];
 
     files = [
@@ -101,6 +102,7 @@
         ".local/share/icons" # Application icons
         ".local/bin" # User scripts
         ".local/share/qBittorrent"
+        ".local/share/openclaw"
         ".local/share/jellyfin-desktop"
         ".cache/jellyfin-desktop"
         ".local/share/zoxide"
@@ -110,5 +112,7 @@
       files = [
       ];
     };
+
+
   };
 }

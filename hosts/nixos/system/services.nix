@@ -14,6 +14,11 @@ let
       proxy_pass_request_body off;
       proxy_set_header Content-Length "";
       proxy_set_header X-Original-URI $request_uri;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host $http_host;
+      proxy_set_header X-Original-Method $request_method;
     '';
   };
 
@@ -23,8 +28,12 @@ let
     auth_request_set $target_url $scheme://$http_host$request_uri;
     auth_request_set $user $upstream_http_remote_user;
     auth_request_set $groups $upstream_http_remote_groups;
+    auth_request_set $name $upstream_http_remote_name;
+    auth_request_set $email $upstream_http_remote_email;
     proxy_set_header Remote-User $user;
     proxy_set_header Remote-Groups $groups;
+    proxy_set_header Remote-Name $name;
+    proxy_set_header Remote-Email $email;
     error_page 401 =302 https://auth.ashisgreat.xyz/?rd=$target_url;
   '';
 in
@@ -101,6 +110,22 @@ in
   myModules.nginx.enable = true;
 
   services.nginx.virtualHosts = {
+    "ashisgreat.xyz" = {
+      useACMEHost = "ashisgreat.xyz";
+      forceSSL = true;
+      root = pkgs.stdenv.mkDerivation {
+        name = "ashisgreat-website";
+        src = ./website;
+        installPhase = ''
+          mkdir -p $out
+          cp -r * $out/
+        '';
+      };
+      locations."/" = {
+        tryFiles = "$uri $uri/ =404";
+      };
+    };
+
     "_" = {
       default = true;
       useACMEHost = "ashisgreat.xyz";
@@ -292,6 +317,28 @@ in
           proxy_set_header X-Real-IP $remote_addr;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
           proxy_set_header Host $host;
+        '';
+      };
+    };
+
+    "openclaw.ashisgreat.xyz" = {
+      useACMEHost = "ashisgreat.xyz";
+      forceSSL = true;
+      extraConfig = autheliaProtect;
+      locations."/authelia" = autheliaLocation;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:18789";
+        proxyWebsockets = true;
+        extraConfig = ''
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_read_timeout 3600s;
+          proxy_send_timeout 3600s;
+          proxy_buffering off;
         '';
       };
     };

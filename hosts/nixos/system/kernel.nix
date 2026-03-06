@@ -10,9 +10,9 @@
   #   inputs.nix-cachyos-kernel.overlays.default
   # ];
   # Use CachyOS Kernel
-  boot.kernelPackages =
-    pkgs.linuxPackagesFor
-      inputs.nix-cachyos-kernel.packages.${pkgs.system}.linux-cachyos-bore-lto;
+  # boot.kernelPackages =
+  #   pkgs.linuxPackagesFor
+  #     inputs.nix-cachyos-kernel.packages.${pkgs.system}.linux-cachyos-bore-lto;
 
   # =============================================================================
   # DEFAULT BOOT: Linux Desktop Mode (GPU for Host)
@@ -44,5 +44,6 @@
     "net.ipv4.tcp_congestion_control" = "bbr";
     "net.core.default_qdisc" = "fq";
     "vm.max_map_count" = 1048576;
+    "user.max_user_namespaces" = 10000;
   };
 }

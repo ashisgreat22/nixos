@@ -98,7 +98,7 @@
     stress-ng
     kdePackages.kleopatra
     kdePackages.ark
-
+    qdirstat
     dysk
     zstd
     podman

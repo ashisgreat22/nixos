@@ -75,7 +75,8 @@
 
   # Unified API Key
   sops.secrets.master_api_key = {
-    owner = "ashie";
+    group = "media";
+    mode = "0440";
   };
 
   sops.templates."api_key.env" = {
@@ -90,6 +91,26 @@
 
   sops.secrets.jwt_secret = {
     owner = "ashie";
+  };
+
+  sops.secrets.github_token = {
+    group = "media";
+    mode = "0440";
+  };
+
+  sops.secrets.searxng_brave_api_key = {
+    group = "media";
+    mode = "0440";
+  };
+
+  sops.secrets.discord_bot_token = {
+    group = "media";
+    mode = "0440";
+  };
+
+  sops.secrets.glm_api_key = {
+    group = "media";
+    mode = "0440";
   };
 
   sops.secrets.hashed_password = {

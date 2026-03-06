@@ -45,8 +45,20 @@ in
 
       # Use the wildcard cert by default for these domains
       commonHttpConfig = ''
+        # WebSocket Upgrade Map
+        map $http_upgrade $connection_upgrade {
+            default upgrade;
+            ""      close;
+        }
+
         # HSTS 1 year
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+        # Real IP configuration
+        set_real_ip_from 127.0.0.1;
+        set_real_ip_from 10.89.0.0/24;
+        real_ip_header X-Forwarded-For;
+        real_ip_recursive on;
       '';
     };
   };

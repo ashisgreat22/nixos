@@ -1,11 +1,6 @@
 {
   description = "Modular NixOS Configuration with Hyprland";
 
-  nixConfig = {
-    extra-substituters = [ "https://attic.mildlyfunctional.gay/nixbsd" ];
-    extra-trusted-public-keys = [ "nixbsd:gwcQlsUONBLrrGCOdEboIAeFq9eLaDqfhfXmHZs1mgc=" ];
-  };
-
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
 
@@ -103,10 +98,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixbsd = {
-      url = "github:nixos-bsd/nixbsd";
+    nix-openclaw = {
+      url = "github:openclaw/nix-openclaw";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
   };
 
   outputs =
@@ -121,7 +117,7 @@
       nixflix,
       arkenfox,
       firefox-addons,
-      nixbsd,
+
       ...
     }@inputs:
     {
@@ -147,24 +143,6 @@
         default = import ./modules/home-manager;
       };
 
-      nixosConfigurations.nixbsd = nixbsd.lib.nixbsdSystem {
-        specialArgs = { inherit inputs; };
-        modules = [
-          ./hosts/nixbsd/configuration.nix
-        ];
-      };
-
-      nixosConfigurations.nixbsd-vm = nixbsd.lib.nixbsdSystem {
-        specialArgs = { inherit inputs; };
-        modules = [
-          ./hosts/nixbsd/configuration.nix
-          ({ config, ... }: {
-             # Enable VM variant
-             # This is already in configuration.nix but we can make it explicit here if we want.
-          })
-        ];
-      };
-
       nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
@@ -188,9 +166,9 @@
               useUserPackages = true;
               backupFileExtension = "backup";
               users.ashie = import ./hosts/nixos/home.nix;
+
             };
           }
-          ./modules/nixos/impermanence.nix
         ];
       };
 
@@ -216,9 +194,9 @@
               useUserPackages = true;
               backupFileExtension = "backup";
               users.ashie = import ./hosts/nixos/home.nix;
+
             };
           }
-          ./modules/nixos/impermanence.nix
         ];
       };
     };

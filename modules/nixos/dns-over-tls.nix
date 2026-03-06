@@ -5,8 +5,8 @@
 #   myModules.dnsOverTls = {
 #     enable = true;
 #     dnssec = true;                              # default: true
-#     primaryDns = [ "9.9.9.9" "1.1.1.1" ];      # default: Quad9 + Cloudflare
-#     fallbackDns = [ "1.1.1.1" "1.0.0.1" ];     # default: Cloudflare
+#     primaryDns = [ "9.9.9.9" "149.112.112.112" ];  # default: Quad9
+#     fallbackDns = [ "9.9.9.9" "149.112.112.112" ]; # default: Quad9
 #   };
 
 {
@@ -34,19 +34,17 @@ in
       default = [
         "9.9.9.9"
         "149.112.112.112"
-        "1.1.1.1"
-        "1.0.0.1"
       ];
-      description = "Primary DNS servers (Quad9 + Cloudflare by default)";
+      description = "Primary DNS servers (Quad9 by default)";
     };
 
     fallbackDns = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [
-        "1.1.1.1"
-        "1.0.0.1"
+        "9.9.9.9"
+        "149.112.112.112"
       ];
-      description = "Fallback DNS servers";
+      description = "Fallback DNS servers (Quad9 by default)";
     };
   };
 
