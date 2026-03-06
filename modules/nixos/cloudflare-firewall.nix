@@ -127,6 +127,8 @@ in
             ip saddr 10.89.0.0/16 accept
             
             # Allow RFC1918 Private Networks (LAN, Containers, Link-Local)
+            # 10.89.0.0/16 covers all typical podman subnets including 10.89.2.0/24
+            ip saddr 10.89.0.0/16 accept
             ${lib.optionalString cfg.allowLocalTraffic ''
               ip saddr 10.0.0.0/8 accept
               ip saddr 172.16.0.0/12 accept
