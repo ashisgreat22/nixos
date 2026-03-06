@@ -57,13 +57,20 @@
             }
         }
 
-        .profile-img {
+        .profile-avatar {
             width: 150px;
             height: 150px;
+            flex-shrink: 0;
             border-radius: 50%;
-            object-fit: cover;
+            background-color: var(--card-bg);
             border: 4px solid var(--accent-color);
             box-shadow: 8px 8px 0px 0px rgba(14, 165, 233, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--accent-color);
         }
 
         .hero-text h1 {
@@ -160,7 +167,7 @@
 <body>
     <main>
         <header class="hero">
-            <img src="profile.png" alt="Ash B." class="profile-img">
+            <div class="profile-avatar">AB</div>
             <div class="hero-text">
                 <h1>Ash (Phil) B. | Python Developer & Data Engineer</h1>
                 <p>I build custom Python scripts that replace hours of manual data entry.</p>
