@@ -16,12 +16,9 @@ with lib.kernel;
 {
 EOF
 
-# Extract disabled options (lines that say "# CONFIG_XXX is not set")
+# Extract disabled options 
 grep "^# CONFIG_.*is not set" "$CONFIG_FILE" | while read -r line; do
-    # Extract config name from "# CONFIG_XXX is not set"
     config_name=$(echo "$line" | sed 's/^# CONFIG_\(.*\) is not set$/\1/')
-    # Quote names that start with a number (invalid Nix syntax otherwise)
-    # Use mkForce to override NixOS defaults
     if [[ "$config_name" =~ ^[0-9] ]]; then
         echo "  \"$config_name\" = lib.mkForce no;" >> "$OUTPUT_FILE"
     else
@@ -29,7 +26,7 @@ grep "^# CONFIG_.*is not set" "$CONFIG_FILE" | while read -r line; do
     fi
 done
 
-# Close the attribute set
+
 echo "}" >> "$OUTPUT_FILE"
 
 echo "Generated $OUTPUT_FILE"

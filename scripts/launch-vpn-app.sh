@@ -2,9 +2,7 @@
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then
-  # Re-run as root, preserving environment
-  # doas automatically preserves some env, allowing specific ones if configured, 
-  # but for simplicity we rely on the internal command to handle env variables.
+ 
   exec doas "$0" "$@"
 fi
 
@@ -23,10 +21,7 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
-# Execute in namespace as the user
-# We use `doas -u $USER` INSIDE the namespace to drop back to user privileges
-# We MUST explicitly pass environment variables because doas cleans them.
-# The bwrapper needs HOME, XDG_RUNTIME_DIR, etc. to function correctly.
+
 exec ip netns exec "$NAMESPACE" doas -u "$USER" env \
   HOME="/home/$USER" \
   USER="$USER" \
