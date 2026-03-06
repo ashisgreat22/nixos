@@ -1,4 +1,10 @@
-{ config, lib, pkgs, inputs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 
 with lib;
 
@@ -27,7 +33,7 @@ in
       default = 18789;
       description = "Port to listen on";
     };
-    
+
     dataDir = mkOption {
       type = types.str;
       default = "/var/lib/openclaw";
@@ -67,16 +73,18 @@ in
       group = cfg.group;
       key = "searxng_brave_api_key";
     };
-    
-    # Ensure secrets exist in sops config, if not user needs to add them.
-    # We assume secrets.yaml has these keys or user will map them.
-    # The user had /run/secrets/openclaw-discord-token before.
+
+    sops.secrets."openclaw/master_api_key" = {
+      owner = cfg.user;
+      group = cfg.group;
+      key = "master_api_key";
+    };
 
     systemd.services.openclaw = {
       description = "OpenClaw AI Agent";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
-      
+
       serviceConfig = {
         User = cfg.user;
         Group = cfg.group;
@@ -85,14 +93,6 @@ in
         Restart = "always";
         RestartSec = "10s";
 
-        # Environment variables or config file generation
-        # OpenClaw seems to take config via a file or env vars.
-        # Based on previous flake, it used a config file.
-        # We can generate the config file in the ExecStartPre or rely on env vars if supported.
-        # The previous flake copied a config file.
-        
-        # Let's verify how openclaw takes config.
-        # It used OPENCLAW_CONFIG_DIR, OPENCLAW_DATA_DIR, OPENCLAW_WORKSPACE_DIR env vars.
       };
 
       environment = {
@@ -110,7 +110,7 @@ in
         mkdir -p ${cfg.dataDir}/config
         mkdir -p ${cfg.dataDir}/data
         mkdir -p ${cfg.dataDir}/workspace
-        
+
         # Generate config.json
         cat > ${cfg.dataDir}/config/openclaw.json <<EOF
         {
@@ -174,6 +174,15 @@ in
                 "models": [
                   { "id": "glm-4.7", "name": "GLM 4.7", "reasoning": true, "contextWindow": 128000, "maxTokens": 128000 },
                   { "id": "glm-5", "name": "GLM 5", "reasoning": true, "contextWindow": 128000, "maxTokens": 128000 }
+                ]
+              },
+              "cli": {
+                "api": "openai-completions",
+                "baseUrl": "http://localhost:8045/cli/v1",
+                "apiKey": "$(cat ${config.sops.secrets."openclaw/master_api_key".path})",
+                "models": [
+                  { "id": "gemini-3.1-pro-preview", "name": "gemini-3.1-pro-preview", "contextWindow": 1000000, "maxTokens": 65536 },
+                  { "id": "gemini-3-flash-preview", "name": "gemini-3-flash-preview", "contextWindow": 128000, "maxTokens": 65536 }
                 ]
               }
             }

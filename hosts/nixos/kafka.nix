@@ -29,7 +29,12 @@
       gateway = {
         port = 18789;
         bind = "loopback";
-        trustedProxies = [ "::1" "127.0.0.1" "10.88.0.0/16" "10.89.0.0/16" ];
+        trustedProxies = [
+          "::1"
+          "127.0.0.1"
+          "10.88.0.0/16"
+          "10.89.0.0/16"
+        ];
         auth = {
           mode = "none";
         };
@@ -42,7 +47,10 @@
         discord = {
           enabled = true;
           token = "/run/secrets/openclaw-discord-token";
-          allowFrom = [ "1178286690750693419" "*" ];
+          allowFrom = [
+            "1178286690750693419"
+            "*"
+          ];
           groupPolicy = "open";
           dmPolicy = "open";
         };
@@ -71,7 +79,7 @@
         mode = "merge";
         providers.zai = {
           baseUrl = "https://api.z.ai/api/coding/paas/v4";
-          apiKey = "e77f2c392cb942eca9d0407eebc75549.XG7ikxT2kBEQUPYx";
+          apiKey = config.sops.secrets."openclaw/glm_api_key".path;
           models = [
             {
               id = "glm-4.7";
@@ -86,6 +94,25 @@
               reasoning = true;
               contextWindow = 128000;
               maxTokens = 128000;
+            }
+          ];
+        };
+        providers.cli = {
+          api = "openai-completions";
+          baseUrl = "http://localhost:8045/cli/v1";
+          apiKey = config.sops.secrets."openclaw/master_api_key".path;
+          models = [
+            {
+              id = "gemini-3.1-pro-preview";
+              name = "gemini-3.1-pro-preview";
+              contextWindow = 1000000;
+              maxTokens = 65536;
+            }
+            {
+              id = "gemini-3-flash-preview";
+              name = "gemini-3-flash-preview";
+              contextWindow = 128000;
+              maxTokens = 65536;
             }
           ];
         };
