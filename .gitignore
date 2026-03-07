@@ -1,21 +1,9 @@
 *.key
-antigravity-src/
+sillytavern/
 *.env
 chars/
 *chars/
-scripts/data_generator/GEMINI.md
-REFRESH_CANDIDATE
-codex2api
-codex2api/
-TOKENA
 personal-website/
-FINDINGS.md
-VULNERAB*
-sillytavern
-unified-router/
-unified_router-nodejs/
-.agent/
-old/
 openclaw/
 
 # Nix build outputs
@@ -24,3 +12,6 @@ result-*
 
 # AI assistant artifacts
 CLAUDE.md
+.claude/
+GEMINI.md
+.agent/
