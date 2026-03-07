@@ -127,7 +127,7 @@ in
           "agents": {
             "defaults": {
               "workspace": "${cfg.dataDir}/workspace",
-              "model": { "primary": "zai/glm-4.7" },
+              "model": { "primary": "cli/gemini-3.1-pro-preview" },
               "memorySearch": {
                 "enabled": true,
                 "provider": "local",

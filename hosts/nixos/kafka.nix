@@ -59,7 +59,7 @@
         defaults = {
           workspace = "/home/kafka/openclaw/workspace";
           model = {
-            primary = "zai/glm-4.7";
+            primary = "cli/gemini-3.1-pro-preview";
           };
         };
       };
