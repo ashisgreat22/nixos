@@ -105,23 +105,33 @@
         force = true;
         engines = {
           "AshisGreat" = {
-            urls = [{
-              template = "https://search.ashisgreat.xyz/search";
-              params = [
-                { name = "q"; value = "{searchTerms}"; }
-              ];
-            }];
+            urls = [
+              {
+                template = "https://search.ashisgreat.xyz/search";
+                params = [
+                  {
+                    name = "q";
+                    value = "{searchTerms}";
+                  }
+                ];
+              }
+            ];
             iconUpdateURL = "https://search.ashisgreat.xyz/favicon.ico";
             updateInterval = 24 * 60 * 60 * 1000; # every day
             definedAliases = [ "@ag" ];
           };
           "Brave Search" = {
-            urls = [{
-              template = "https://search.brave.com/search";
-              params = [
-                { name = "q"; value = "{searchTerms}"; }
-              ];
-            }];
+            urls = [
+              {
+                template = "https://search.brave.com/search";
+                params = [
+                  {
+                    name = "q";
+                    value = "{searchTerms}";
+                  }
+                ];
+              }
+            ];
             iconUpdateURL = "https://search.brave.com/favicon.ico";
             updateInterval = 24 * 60 * 60 * 1000; # every day
             definedAliases = [ "@b" ];
