@@ -40,6 +40,7 @@
   myModules.gaming.gamemode.enable = true;
   myModules.redlib.enable = true;
   services.openclaw-service.enable = true;
+  services.my-proxies.litellm.enable = true;
 
   # Enable sandboxed applications
   myModules.wireproxy = {

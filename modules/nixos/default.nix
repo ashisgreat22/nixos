@@ -44,5 +44,6 @@
     ./impermanence.nix
     ./auto-update.nix
     ./openclaw.nix
+    ./litellm.nix
   ];
 }
