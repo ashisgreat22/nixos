@@ -108,8 +108,10 @@
         ".local/share/zoxide"
         ".local/share/fish"
         "fabric-docs-mcp"
+        ".claude"
       ];
       files = [
+        ".claude.json"
       ];
     };
 
